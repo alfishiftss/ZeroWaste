@@ -3,8 +3,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+const authRoutes = require('./routes/authRoutes');
+const listingRoutes = require('./routes/listingRoutes');
+
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -14,6 +18,10 @@ mongoose.connect(process.env.MONGO_URI, {
 })
     .then(() => console.log('Successfully connected to MongoDB Atlas!'))
     .catch((error) => console.log('Database connection failed:', error));
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/listings', listingRoutes);
 
 // Basic Test Route
 app.get('/', (req, res) => {
