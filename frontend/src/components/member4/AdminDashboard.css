@@ -1,0 +1,86 @@
+/* =========================================
+   AdminDashboard.css — Users Panel
+   Stat tiles, data table, badges and states
+   come from styles/theme.css
+   ========================================= */
+
+.admin-container {
+    animation: fadeSlideUp 0.5s var(--t-slow) both;
+}
+
+/* ---- Header ---- */
+
+.admin-header {
+    margin-bottom: 1.75rem;
+}
+
+.admin-header h2 {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.3rem;
+}
+
+.admin-subtitle {
+    color: var(--text-3);
+    font-size: 0.95rem;
+}
+
+.admin-subtitle strong {
+    color: var(--brand-300);
+    font-weight: 700;
+}
+
+/* ---- Stats ---- */
+
+.admin-stats {
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 1.75rem;
+}
+
+/* ---- Table cells (.table-wrap / .data-table supply the frame) ---- */
+
+.row-number {
+    color: var(--text-4);
+    font-weight: 600;
+}
+
+.user-name {
+    font-weight: 650;
+    color: var(--text);
+}
+
+.user-email {
+    color: var(--text-3);
+}
+
+.user-date {
+    color: var(--text-4);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* Role badge colours (.badge supplies the base pill). */
+.role-admin {
+    background: var(--warn-soft);
+    border-color: rgba(251, 191, 36, 0.24);
+    color: var(--warn);
+}
+
+.role-business {
+    background: var(--info-soft);
+    border-color: rgba(96, 165, 250, 0.24);
+    color: var(--info);
+}
+
+.role-consumer {
+    background: var(--ok-soft);
+    border-color: rgba(74, 222, 128, 0.24);
+    color: var(--ok);
+}
+
+@media (max-width: 620px) {
+    .admin-stats {
+        grid-template-columns: 1fr;
+    }
+}

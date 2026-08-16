@@ -1,0 +1,149 @@
+/* =========================================
+   Profile.css — Account settings
+   Panel surface, form fields, buttons, alerts
+   and spinner come from styles/theme.css
+   ========================================= */
+
+.profile-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3.5rem;
+}
+
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: fadeSlideUp 0.5s var(--t-slow) both;
+}
+
+/* ---- Avatar / identity card ---- */
+
+.profile-pic-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.25rem 1rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.022));
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-1);
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-bottom: 1.1rem;
+    overflow: hidden;
+    border: 3px solid var(--stroke-brand);
+    transition: border-color var(--t), transform var(--t);
+}
+
+.profile-avatar-wrapper:hover {
+    border-color: var(--brand-400);
+    transform: translateY(-2px);
+}
+
+.profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grad-brand);
+    color: var(--brand-ink);
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--t);
+    font-size: 1.5rem;
+}
+
+.profile-avatar-wrapper:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.avatar-uploading {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.profile-role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.75rem;
+    background: var(--brand-soft);
+    border: 1px solid var(--stroke-brand);
+    color: var(--brand-300);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: var(--r-full);
+    margin-bottom: 0.55rem;
+}
+
+.profile-email-display {
+    color: var(--text-3);
+    font-size: 0.9rem;
+}
+
+/* ---- Editable cards (.panel supplies surface) ---- */
+
+.profile-card {
+    padding: 1.75rem;
+}
+
+.profile-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+}
+
+.profile-message {
+    margin-bottom: 1.25rem;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Slight top spacing for the submit buttons. */
+.profile-save-btn,
+.profile-pw-btn {
+    margin-top: 0.35rem;
+}
+
+@media (max-width: 620px) {
+    .profile-card {
+        padding: 1.4rem;
+    }
+}

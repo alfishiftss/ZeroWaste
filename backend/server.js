@@ -1,12 +1,19 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
+
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -14,6 +21,9 @@ mongoose.connect(process.env.MONGO_URI, {
 })
     .then(() => console.log('Successfully connected to MongoDB Atlas!'))
     .catch((error) => console.log('Database connection failed:', error));
+
+// API Routes
+app.use('/api/auth', authRoutes);
 
 // Basic Test Route
 app.get('/', (req, res) => {
