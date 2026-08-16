@@ -80,6 +80,8 @@ function Navbar() {
                 </button>
 
                 <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
+                    <li><Link to="/" className={linkClass('/')}>Home</Link></li>
+
                     {user && user.role === 'Admin' && (
                         <li>
                             <Link to="/admin" className={linkClass('/admin')}>Admin Panel</Link>

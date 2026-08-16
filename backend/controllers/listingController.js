@@ -61,4 +61,16 @@ const getMyListings = async (req, res) => {
     }
 };
 
-module.exports = { createListing, getMyListings };
+const getAllListings = async (req, res) => {
+    try {
+        const listings = await Listing.find({ status: 'Active' })
+            .sort({ createdAt: -1 })
+            .populate('business', 'name email role');
+            
+        res.json(listings);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching listings' });
+    }
+};
+
+module.exports = { createListing, getMyListings, getAllListings };
