@@ -28,6 +28,8 @@ function Login() {
             const role = res.data.user.role;
             if (role === 'Admin') {
                 navigate('/admin');
+            } else if (role === 'Business') {
+                navigate('/business/listings');
             } else {
                 navigate('/profile');
             }
