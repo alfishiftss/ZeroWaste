@@ -28,6 +28,15 @@ const userSchema = new mongoose.Schema(
             enum: ['Admin', 'Business', 'Consumer'],
             default: 'Consumer',
         },
+        phone: {
+            type: String,
+            trim: true,
+            default: '',
+        },
+        profilePicture: {
+            type: String,
+            default: '',
+        },
     },
     { timestamps: true }
 );

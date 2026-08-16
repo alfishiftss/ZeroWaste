@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import API from '../api';
+import API from '../../api';
 import './Auth.css';
 
 function Register() {
@@ -27,7 +27,15 @@ function Register() {
             const res = await API.post('/auth/register', formData);
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user', JSON.stringify(res.data.user));
-            navigate('/');
+            window.dispatchEvent(new Event('authChange'));
+
+            // Role-based redirect
+            const role = res.data.user.role;
+            if (role === 'Admin') {
+                navigate('/admin');
+            } else {
+                navigate('/profile');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
         } finally {
@@ -36,15 +44,15 @@ function Register() {
     };
 
     return (
-        <div className="auth-container">
+        <div className="auth-container page">
             <div className="auth-card">
                 <div className="auth-header">
-                    <div className="auth-icon">🌱</div>
+                    <div className="auth-icon" aria-hidden="true">🌱</div>
                     <h2>Create Account</h2>
                     <p>Join ZeroWaste and start rescuing food</p>
                 </div>
 
-                {error && <div className="auth-error">{error}</div>}
+                {error && <div className="alert alert-error auth-error">⚠️ {error}</div>}
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
@@ -100,8 +108,19 @@ function Register() {
                         </select>
                     </div>
 
-                    <button type="submit" className="auth-btn" disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Sign Up'}
+                    <button
+                        type="submit"
+                        className="btn btn-primary btn-block auth-btn"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <>
+                                <span className="loading-spinner small" aria-hidden="true"></span>
+                                Creating Account...
+                            </>
+                        ) : (
+                            'Sign Up'
+                        )}
                     </button>
                 </form>
 

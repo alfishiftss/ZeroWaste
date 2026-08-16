@@ -1,16 +1,19 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
-const listingRoutes = require('./routes/listingRoutes');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -21,7 +24,6 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/listings', listingRoutes);
 
 // Basic Test Route
 app.get('/', (req, res) => {
