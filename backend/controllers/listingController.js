@@ -63,7 +63,7 @@ const getMyListings = async (req, res) => {
 
 const getAllListings = async (req, res) => {
     try {
-        const listings = await Listing.find({ status: 'Active' })
+        const listings = await Listing.find({ status: 'active' })
             .sort({ createdAt: -1 })
             .populate('business', 'name email role');
             
