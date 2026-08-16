@@ -51,8 +51,11 @@ function Navbar() {
     };
 
     // Highlight the link matching the current route
+    const isActivePath = (path) =>
+        location.pathname === path || location.pathname.startsWith(`${path}/`);
+
     const linkClass = (path) =>
-        `nav-link${location.pathname === path ? ' active' : ''}`;
+        `nav-link${isActivePath(path) ? ' active' : ''}`;
 
     return (
         <nav className="navbar">
@@ -80,6 +83,14 @@ function Navbar() {
                     {user && user.role === 'Admin' && (
                         <li>
                             <Link to="/admin" className={linkClass('/admin')}>Admin Panel</Link>
+                        </li>
+                    )}
+
+                    {user && user.role === 'Business' && (
+                        <li>
+                            <Link to="/business/listings" className={linkClass('/business')}>
+                                Listing Dashboard
+                            </Link>
                         </li>
                     )}
 

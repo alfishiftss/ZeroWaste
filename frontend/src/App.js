@@ -5,6 +5,7 @@ import Login from './components/member1/Login';
 import Register from './components/member1/Register';
 import AdminDashboard from './components/member4/AdminDashboard';
 import Profile from './components/member1/Profile';
+import CreateListing from './components/member2/CreateListing';
 
 function App() {
     return (
@@ -21,6 +22,8 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/business" element={<CreateListing />} />
+                        <Route path="/business/listings" element={<CreateListing />} />
                     </Routes>
                 </main>
 

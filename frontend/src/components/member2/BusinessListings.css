@@ -1,0 +1,162 @@
+/* Business dashboard for Feature 10 */
+
+.business-container {
+    animation: fadeSlideUp 0.5s var(--t-slow) both;
+}
+
+.business-page-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.business-hero {
+    padding: 1.6rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 1.35rem;
+    align-items: center;
+}
+
+.business-hero-copy h2 {
+    margin-top: 0.9rem;
+    margin-bottom: 0.55rem;
+    font-size: 2rem;
+    font-weight: 850;
+}
+
+.business-hero-copy p {
+    color: var(--text-2);
+    max-width: 58ch;
+}
+
+.business-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.business-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.business-card {
+    padding: 1.5rem;
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.section-kicker {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand-300);
+}
+
+.section-heading h3 {
+    font-size: 1.15rem;
+    font-weight: 750;
+}
+
+.business-alert {
+    margin-bottom: 1rem;
+}
+
+.business-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.listing-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.listing-card {
+    padding: 1rem 1.05rem;
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-md);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+}
+
+.listing-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.listing-card h4 {
+    font-size: 1.02rem;
+    font-weight: 750;
+    margin-bottom: 0.25rem;
+}
+
+.listing-meta {
+    color: var(--text-4);
+    font-size: 0.8rem;
+}
+
+.listing-description {
+    color: var(--text-2);
+    margin-bottom: 0.9rem;
+}
+
+.listing-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.listing-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--r-full);
+    border: 1px solid var(--stroke);
+    background: var(--surface-1);
+    color: var(--text-3);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.business-empty-state {
+    min-height: 320px;
+}
+
+.business-access-panel {
+    padding: 1rem;
+}
+
+.business-access-state {
+    min-height: 42vh;
+}
+
+@media (max-width: 980px) {
+    .business-hero,
+    .business-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .business-card {
+        padding: 1.25rem;
+    }
+
+    .section-heading {
+        flex-direction: column;
+    }
+}
