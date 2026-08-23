@@ -1,8 +1,4 @@
-/* =========================================
-   AdminDashboard.css — Users Panel
-   Stat tiles, data table, badges and states
-   come from styles/theme.css
-   ========================================= */
+ 
 
 .admin-container {
     animation: fadeSlideUp 0.5s var(--t-slow) both;

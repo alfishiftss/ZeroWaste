@@ -69,5 +69,11 @@ app.get('/', (req, res) => {
     res.send('ZeroWaste API is running!');
 });
 
+// Error handler — catches Multer/upload errors and returns JSON instead of HTML
+app.use((err, req, res, next) => {
+    if (!err) return next();
+    res.status(400).json({ message: err.message || 'Something went wrong' });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

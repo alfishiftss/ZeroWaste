@@ -40,6 +40,26 @@ const listingSchema = new mongoose.Schema(
             enum: ['active', 'claimed', 'expired'],
             default: 'active',
         },
+        imageUrl: {
+            type: String,
+            default: '',
+        },
+        imagePublicId: {
+            type: String,
+            default: '',
+        },
+        city: {
+            type: String,
+            trim: true,
+            maxlength: [60, 'City cannot exceed 60 characters'],
+            default: '',
+        },
+        neighborhood: {
+            type: String,
+            trim: true,
+            maxlength: [60, 'Neighborhood cannot exceed 60 characters'],
+            default: '',
+        },
     },
     { timestamps: true }
 );

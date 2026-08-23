@@ -1,10 +1,20 @@
 const Listing = require('../models/Listing');
+const cloudinary = require('../config/cloudinary');
 
 const populateListing = (query) => query.populate('business', 'name email role');
 
+const deleteImage = async (publicId) => {
+    if (!publicId) return;
+    try {
+        await cloudinary.uploader.destroy(publicId);
+    } catch (error) {
+        // Non-fatal — an orphaned Cloudinary asset is not worth failing the request over
+    }
+};
+
 const createListing = async (req, res) => {
     try {
-        const { title, description, quantity, foodType, expiryTime } = req.body;
+        const { title, description, quantity, foodType, expiryTime, city, neighborhood } = req.body;
 
         const parsedQuantity = Number(quantity);
         const parsedExpiryTime = new Date(expiryTime);
@@ -32,6 +42,10 @@ const createListing = async (req, res) => {
             quantity: parsedQuantity,
             foodType,
             expiryTime: parsedExpiryTime,
+            city: city || '',
+            neighborhood: neighborhood || '',
+            imageUrl: req.file ? req.file.path : '',
+            imagePublicId: req.file ? req.file.filename : '',
         });
 
         const populatedListing = await populateListing(listing);
@@ -41,6 +55,7 @@ const createListing = async (req, res) => {
             listing: populatedListing,
         });
     } catch (error) {
+        if (req.file) await deleteImage(req.file.filename);
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map((e) => e.message);
             return res.status(400).json({ message: messages.join(', ') });
@@ -61,16 +76,151 @@ const getMyListings = async (req, res) => {
     }
 };
 
+// @desc    Get active listings for the public feed — supports search + filters
+// @route   GET /api/listings?q=&city=&foodType=&endingSoon=true
+// @access  Public
 const getAllListings = async (req, res) => {
     try {
-        const listings = await Listing.find({ status: 'active' })
-            .sort({ createdAt: -1 })
+        const { q, city, foodType, endingSoon } = req.query;
+
+        const query = {
+            status: 'active',
+            expiryTime: { $gt: new Date() },
+        };
+
+        const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Independent OR-groups combined with AND, so text search and location
+        // filter each narrow the results rather than widening them together.
+        const andConditions = [];
+
+        if (q && q.trim()) {
+            const pattern = new RegExp(escapeRegex(q.trim()), 'i');
+            andConditions.push({ $or: [{ title: pattern }, { description: pattern }] });
+        }
+
+        if (city && city.trim()) {
+            const pattern = new RegExp(escapeRegex(city.trim()), 'i');
+            andConditions.push({ $or: [{ city: pattern }, { neighborhood: pattern }] });
+        }
+
+        if (andConditions.length > 0) {
+            query.$and = andConditions;
+        }
+
+        if (foodType && ['Veg', 'Non-Veg'].includes(foodType)) {
+            query.foodType = foodType;
+        }
+
+        if (endingSoon === 'true') {
+            const soonThreshold = new Date(Date.now() + 3 * 60 * 60 * 1000);
+            query.expiryTime.$lte = soonThreshold;
+        }
+
+        const listings = await Listing.find(query)
+            .sort({ expiryTime: 1 })
             .populate('business', 'name email role');
-            
+
         res.json(listings);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching listings' });
     }
 };
 
-module.exports = { createListing, getMyListings, getAllListings };
+// @desc    Update own listing
+// @route   PUT /api/listings/:id
+// @access  Private/Business (owner only)
+const updateListing = async (req, res) => {
+    try {
+        const listing = await Listing.findById(req.params.id);
+
+        if (!listing) {
+            return res.status(404).json({ message: 'Listing not found' });
+        }
+
+        if (listing.business.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'You can only edit your own listings' });
+        }
+
+        const { title, description, quantity, foodType, expiryTime, city, neighborhood, status } = req.body;
+
+        if (title !== undefined) listing.title = title;
+        if (description !== undefined) listing.description = description;
+        if (city !== undefined) listing.city = city;
+        if (neighborhood !== undefined) listing.neighborhood = neighborhood;
+
+        if (quantity !== undefined) {
+            const parsedQuantity = Number(quantity);
+            if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+                return res.status(400).json({ message: 'Quantity must be a whole number greater than zero' });
+            }
+            listing.quantity = parsedQuantity;
+        }
+
+        if (foodType !== undefined) listing.foodType = foodType;
+
+        if (expiryTime !== undefined) {
+            const parsedExpiryTime = new Date(expiryTime);
+            if (Number.isNaN(parsedExpiryTime.getTime())) {
+                return res.status(400).json({ message: 'Please provide a valid expiry time' });
+            }
+            listing.expiryTime = parsedExpiryTime;
+        }
+
+        if (status !== undefined) {
+            if (!['active', 'claimed', 'expired'].includes(status)) {
+                return res.status(400).json({ message: 'Invalid status value' });
+            }
+            listing.status = status;
+        }
+
+        if (req.file) {
+            const oldPublicId = listing.imagePublicId;
+            listing.imageUrl = req.file.path;
+            listing.imagePublicId = req.file.filename;
+            await deleteImage(oldPublicId);
+        }
+
+        await listing.save();
+
+        const populatedListing = await populateListing(listing);
+
+        res.json({
+            message: 'Listing updated successfully',
+            listing: populatedListing,
+        });
+    } catch (error) {
+        if (req.file) await deleteImage(req.file.filename);
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map((e) => e.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
+        res.status(500).json({ message: 'Server error updating listing' });
+    }
+};
+
+// @desc    Delete own listing
+// @route   DELETE /api/listings/:id
+// @access  Private/Business (owner only)
+const deleteListing = async (req, res) => {
+    try {
+        const listing = await Listing.findById(req.params.id);
+
+        if (!listing) {
+            return res.status(404).json({ message: 'Listing not found' });
+        }
+
+        if (listing.business.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'You can only delete your own listings' });
+        }
+
+        await deleteImage(listing.imagePublicId);
+        await listing.deleteOne();
+
+        res.json({ message: 'Listing deleted successfully', id: req.params.id });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error deleting listing' });
+    }
+};
+
+module.exports = { createListing, getMyListings, getAllListings, updateListing, deleteListing };
