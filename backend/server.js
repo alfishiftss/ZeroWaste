@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const listingRoutes = require('./routes/listingRoutes');
+const moderationRoutes = require('./routes/M4_moderationRoutes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ connectDatabase();
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
+app.use('/api/moderation', moderationRoutes);
 
 // Basic Test Route
 app.get('/', (req, res) => {

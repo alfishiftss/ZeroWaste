@@ -4,6 +4,7 @@ import Navbar from './components/member1/Navbar';
 import Login from './components/member1/Login';
 import Register from './components/member1/Register';
 import AdminDashboard from './components/member4/AdminDashboard';
+import M4_ContentModeration from './components/member4/M4_ContentModeration';
 import Profile from './components/member1/Profile';
 import CreateListing from './components/member2/CreateListing';
 import Home from './components/member3/Home';
@@ -22,6 +23,7 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/admin" element={<AdminDashboard />} />
+                        <Route path="/admin/moderation" element={<M4_ContentModeration />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/business" element={<CreateListing />} />
                         <Route path="/business/listings" element={<CreateListing />} />
