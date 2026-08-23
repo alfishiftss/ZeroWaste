@@ -1,0 +1,156 @@
+/* ============================================================
+   M4_ContentModeration.css
+   Styles specific to the Content Moderation page.
+   Global primitives (stat-grid, data-table, badge, btn, etc.)
+   are inherited from theme.css — this file only adds the pieces
+   unique to the moderation view.
+   ============================================================ */
+
+.moderation-container {
+    animation: fadeSlideUp 0.5s var(--t-slow) both;
+}
+
+/* ---- Header ---- */
+
+.moderation-header {
+    margin-bottom: 1.75rem;
+}
+
+.moderation-header h2 {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.3rem;
+}
+
+.moderation-subtitle {
+    color: var(--text-3);
+    font-size: 0.95rem;
+}
+
+.moderation-subtitle strong {
+    color: var(--brand-300);
+    font-weight: 700;
+}
+
+/* ---- Stats ---- */
+
+.moderation-stats {
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 1.75rem;
+}
+
+/* ---- Toast ---- */
+
+.moderation-toast {
+    margin-bottom: 1.25rem;
+}
+
+/* ---- Image thumbnails ---- */
+
+.mod-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-xs);
+    object-fit: cover;
+    border: 1px solid var(--stroke);
+}
+
+.mod-thumb-placeholder {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: var(--surface-1);
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-xs);
+}
+
+/* ---- Cell tweaks ---- */
+
+.mod-title {
+    font-weight: 650;
+    color: var(--text);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mod-business {
+    color: var(--text-2);
+    white-space: nowrap;
+}
+
+.mod-qty {
+    text-align: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.mod-expiry {
+    white-space: nowrap;
+    color: var(--text-3);
+    font-size: 0.85rem;
+}
+
+.mod-date {
+    color: var(--text-4);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.th-action {
+    text-align: center;
+}
+
+/* ---- Force Delete button ---- */
+
+.btn-force-delete {
+    background: var(--danger-soft);
+    border: 1px solid rgba(251, 113, 133, 0.22);
+    color: #fda4af;
+    font-weight: 650;
+    white-space: nowrap;
+    gap: 0.35rem;
+    transition: background var(--t), border-color var(--t), color var(--t), transform var(--t-fast);
+}
+
+.btn-force-delete:hover:not(:disabled) {
+    background: rgba(251, 113, 133, 0.22);
+    border-color: rgba(251, 113, 133, 0.5);
+    color: #fecdd3;
+    transform: translateY(-1px);
+}
+
+.btn-force-delete:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-force-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ---- Row deletion animation ---- */
+
+.row-deleting td {
+    opacity: 0.45;
+    transition: opacity var(--t);
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 900px) {
+    .moderation-table-wrapper {
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 620px) {
+    .moderation-stats {
+        grid-template-columns: 1fr;
+    }
+}
