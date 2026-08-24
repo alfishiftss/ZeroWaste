@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API from '../../api';
+import API, { getImageUrl } from '../../api';
 import './BusinessListings.css';
 
 const initialForm = {
@@ -9,6 +9,18 @@ const initialForm = {
     quantity: '',
     foodType: 'Veg',
     expiryTime: '',
+    city: '',
+    neighborhood: '',
+};
+
+// Format a Date/ISO string into the value a <input type="datetime-local"> expects
+const toDateTimeLocal = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+        date.getHours()
+    )}:${pad(date.getMinutes())}`;
 };
 
 function BusinessListings() {
@@ -19,8 +31,12 @@ function BusinessListings() {
     });
     const [listings, setListings] = useState([]);
     const [formData, setFormData] = useState(initialForm);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState('');
+    const [editingId, setEditingId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
@@ -56,12 +72,66 @@ function BusinessListings() {
         fetchListings();
     }, [isBusiness, user]);
 
+    // Release the object URL used for the local image preview when it changes/unmounts
+    useEffect(() => {
+        return () => {
+            if (imagePreview) URL.revokeObjectURL(imagePreview);
+        };
+    }, [imagePreview]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
     const resetForm = () => {
         setFormData(initialForm);
+        setImageFile(null);
+        setImagePreview('');
+        setEditingId(null);
+    };
+
+    const startEdit = (listing) => {
+        setEditingId(listing._id);
+        setFormData({
+            title: listing.title,
+            description: listing.description,
+            quantity: String(listing.quantity),
+            foodType: listing.foodType,
+            expiryTime: toDateTimeLocal(listing.expiryTime),
+            city: listing.city || '',
+            neighborhood: listing.neighborhood || '',
+        });
+        setImageFile(null);
+        setImagePreview('');
+        setMessage('');
+        setError('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDelete = async (listingId) => {
+        if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+
+        setDeletingId(listingId);
+        setError('');
+        setMessage('');
+
+        try {
+            await API.delete(`/listings/${listingId}`);
+            setListings((current) => current.filter((listing) => listing._id !== listingId));
+            setMessage('Listing deleted.');
+            if (editingId === listingId) resetForm();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Could not delete listing');
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -71,17 +141,31 @@ function BusinessListings() {
         setSaving(true);
 
         try {
-            const payload = {
-                ...formData,
-                quantity: Number(formData.quantity),
-            };
+            const payload = new FormData();
+            payload.append('title', formData.title);
+            payload.append('description', formData.description);
+            payload.append('quantity', formData.quantity);
+            payload.append('foodType', formData.foodType);
+            payload.append('expiryTime', formData.expiryTime);
+            payload.append('city', formData.city);
+            payload.append('neighborhood', formData.neighborhood);
+            if (imageFile) payload.append('image', imageFile);
 
-            const res = await API.post('/listings', payload);
-            setListings((current) => [res.data.listing, ...current]);
-            setMessage('Listing posted successfully.');
+            if (editingId) {
+                const res = await API.put(`/listings/${editingId}`, payload);
+                setListings((current) =>
+                    current.map((listing) => (listing._id === editingId ? res.data.listing : listing))
+                );
+                setMessage('Listing updated successfully.');
+            } else {
+                const res = await API.post('/listings', payload);
+                setListings((current) => [res.data.listing, ...current]);
+                setMessage('Listing posted successfully.');
+            }
+
             resetForm();
         } catch (err) {
-            setError(err.response?.data?.message || 'Could not create listing');
+            setError(err.response?.data?.message || 'Could not save listing');
         } finally {
             setSaving(false);
         }
@@ -154,8 +238,8 @@ function BusinessListings() {
                         </span>
                         <h2>Listing Management</h2>
                         <p>
-                            Create text-only food listings for nearby users and keep track of what your
-                            business has posted.
+                            Create food listings with a photo for nearby users, and edit or remove them
+                            any time.
                         </p>
                     </div>
 
@@ -179,10 +263,16 @@ function BusinessListings() {
                     <section className="panel panel-lit business-card">
                         <div className="section-heading">
                             <div>
-                                <span className="section-kicker">New post</span>
-                                <h3>Create a listing</h3>
+                                <span className="section-kicker">{editingId ? 'Editing post' : 'New post'}</span>
+                                <h3>{editingId ? 'Edit listing' : 'Create a listing'}</h3>
                             </div>
-                            <span className="badge badge-neutral">Text only</span>
+                            {editingId ? (
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={resetForm}>
+                                    Cancel edit
+                                </button>
+                            ) : (
+                                <span className="badge badge-neutral">Photo optional</span>
+                            )}
                         </div>
 
                         {message && <div className="alert alert-success business-alert">{message}</div>}
@@ -249,6 +339,34 @@ function BusinessListings() {
                                 </div>
                             </div>
 
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="listing-city">City</label>
+                                    <input
+                                        id="listing-city"
+                                        name="city"
+                                        type="text"
+                                        placeholder="e.g. Dhaka"
+                                        value={formData.city}
+                                        onChange={handleChange}
+                                        maxLength={60}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="listing-neighborhood">Neighborhood</label>
+                                    <input
+                                        id="listing-neighborhood"
+                                        name="neighborhood"
+                                        type="text"
+                                        placeholder="e.g. Gulshan"
+                                        value={formData.neighborhood}
+                                        onChange={handleChange}
+                                        maxLength={60}
+                                    />
+                                </div>
+                            </div>
+
                             <div className="form-group">
                                 <label htmlFor="listing-expiry">Expiry Time</label>
                                 <input
@@ -261,12 +379,35 @@ function BusinessListings() {
                                 />
                             </div>
 
+                            <div className="form-group">
+                                <label htmlFor="listing-image">Photo</label>
+                                <input
+                                    id="listing-image"
+                                    name="image"
+                                    type="file"
+                                    accept="image/png, image/jpeg, image/gif, image/webp"
+                                    onChange={handleImageChange}
+                                />
+                                {(imagePreview || (editingId && listings.find((l) => l._id === editingId)?.imageUrl)) && (
+                                    <img
+                                        className="image-preview"
+                                        alt="Listing preview"
+                                        src={
+                                            imagePreview ||
+                                            getImageUrl(listings.find((l) => l._id === editingId)?.imageUrl)
+                                        }
+                                    />
+                                )}
+                            </div>
+
                             <button type="submit" className="btn btn-primary btn-block" disabled={saving}>
                                 {saving ? (
                                     <>
                                         <span className="loading-spinner small" aria-hidden="true"></span>
-                                        Publishing...
+                                        {editingId ? 'Saving...' : 'Publishing...'}
                                     </>
+                                ) : editingId ? (
+                                    'Save Changes'
                                 ) : (
                                     'Publish Listing'
                                 )}
@@ -293,7 +434,14 @@ function BusinessListings() {
                                 {listings.map((listing) => (
                                     <article key={listing._id} className="listing-card">
                                         <div className="listing-card-head">
-                                            <div>
+                                            {listing.imageUrl && (
+                                                <img
+                                                    className="listing-thumb"
+                                                    src={getImageUrl(listing.imageUrl)}
+                                                    alt={listing.title}
+                                                />
+                                            )}
+                                            <div className="listing-card-title-wrap">
                                                 <h4>{listing.title}</h4>
                                                 <p className="listing-meta">
                                                     Posted {formatCreatedDate(listing.createdAt)}
@@ -320,6 +468,29 @@ function BusinessListings() {
                                             <span className="listing-pill">
                                                 Expires: {formatDateTime(listing.expiryTime)}
                                             </span>
+                                            {(listing.neighborhood || listing.city) && (
+                                                <span className="listing-pill">
+                                                    {[listing.neighborhood, listing.city].filter(Boolean).join(', ')}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="listing-actions">
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary btn-sm"
+                                                onClick={() => startEdit(listing)}
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-danger-ghost btn-sm"
+                                                onClick={() => handleDelete(listing._id)}
+                                                disabled={deletingId === listing._id}
+                                            >
+                                                {deletingId === listing._id ? 'Deleting...' : 'Delete'}
+                                            </button>
                                         </div>
                                     </article>
                                 ))}

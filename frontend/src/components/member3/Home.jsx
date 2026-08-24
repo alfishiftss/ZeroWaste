@@ -1,17 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import API from '../../api';
+import API, { getImageUrl } from '../../api';
 import './Home.css';
+
+const initialFilters = {
+    city: '',
+    foodType: '',
+    endingSoon: false,
+};
 
 function Home() {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [debouncedQuery, setDebouncedQuery] = useState('');
+    const [filters, setFilters] = useState(initialFilters);
+    const [cityOptions, setCityOptions] = useState([]);
+
+    // Debounce the free-text search so we don't fire a request per keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedQuery(searchInput.trim()), 350);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    // Build the city suggestion list once, from the unfiltered feed
+    useEffect(() => {
+        const loadCities = async () => {
+            try {
+                const res = await API.get('/listings');
+                const cities = [...new Set(res.data.map((l) => l.city).filter(Boolean))].sort();
+                setCityOptions(cities);
+            } catch (err) {
+                // Non-critical — city suggestions just stay empty
+            }
+        };
+        loadCities();
+    }, []);
 
     useEffect(() => {
         const fetchListings = async () => {
+            setLoading(true);
             try {
-                const res = await API.get('/listings');
+                const params = {};
+                if (debouncedQuery) params.q = debouncedQuery;
+                if (filters.city.trim()) params.city = filters.city.trim();
+                if (filters.foodType) params.foodType = filters.foodType;
+                if (filters.endingSoon) params.endingSoon = 'true';
+
+                const res = await API.get('/listings', { params });
                 setListings(res.data);
+                setError('');
             } catch (err) {
                 setError('Failed to load listings');
             } finally {
@@ -19,7 +57,20 @@ function Home() {
             }
         };
         fetchListings();
-    }, []);
+    }, [debouncedQuery, filters.city, filters.foodType, filters.endingSoon]);
+
+    const handleFilterChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFilters((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+    };
+
+    const clearFilters = () => {
+        setSearchInput('');
+        setFilters(initialFilters);
+    };
+
+    const hasActiveFilters =
+        searchInput.trim() || filters.city.trim() || filters.foodType || filters.endingSoon;
 
     const formatExpiry = (dateStr) => {
         const date = new Date(dateStr);
@@ -34,17 +85,7 @@ function Home() {
         return `${diffMins}m left`;
     };
 
-    const getFoodTypeEmoji = (type) => {
-        const emojis = {
-            Cooked: '🍲',
-            Raw: '🥬',
-            Packaged: '📦',
-            Bakery: '🍞',
-            Dairy: '🧀',
-            Other: '🍽️',
-        };
-        return emojis[type] || '🍽️';
-    };
+    const getFoodTypeEmoji = (type) => (type === 'Veg' ? '🥗' : '🍗');
 
     // Visual urgency tier for the expiry pill
     const getExpiryTone = (dateStr) => {
@@ -54,7 +95,68 @@ function Home() {
         return 'badge-ok';
     };
 
-    if (loading) {
+    const filterBar = (
+        <div className="feed-toolbar panel panel-lit">
+            <div className="search-field">
+                <span className="search-icon" aria-hidden="true">🔎</span>
+                <input
+                    type="text"
+                    placeholder="Search by title or description..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    aria-label="Search food listings"
+                />
+            </div>
+
+            <div className="filter-controls">
+                <input
+                    className="filter-input"
+                    type="text"
+                    name="city"
+                    list="city-options"
+                    placeholder="Neighborhood / City"
+                    value={filters.city}
+                    onChange={handleFilterChange}
+                    aria-label="Filter by neighborhood or city"
+                />
+                <datalist id="city-options">
+                    {cityOptions.map((city) => (
+                        <option key={city} value={city} />
+                    ))}
+                </datalist>
+
+                <select
+                    className="filter-input"
+                    name="foodType"
+                    value={filters.foodType}
+                    onChange={handleFilterChange}
+                    aria-label="Filter by food type"
+                >
+                    <option value="">All Food Types</option>
+                    <option value="Veg">Veg</option>
+                    <option value="Non-Veg">Non-Veg</option>
+                </select>
+
+                <label className="ending-soon-toggle">
+                    <input
+                        type="checkbox"
+                        name="endingSoon"
+                        checked={filters.endingSoon}
+                        onChange={handleFilterChange}
+                    />
+                    Ending Soon
+                </label>
+
+                {hasActiveFilters && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={clearFilters}>
+                        Clear
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+
+    if (loading && listings.length === 0) {
         return (
             <div className="home-container page">
                 <div className="page-inner">
@@ -79,17 +181,13 @@ function Home() {
         );
     }
 
-    const availableCount = listings.filter(
-        (l) => new Date(l.expiryTime) > new Date()
-    ).length;
-
     return (
         <div className="home-container page">
             <div className="page-inner">
                 <header className="home-hero">
                     <span className="eyebrow">
                         <span className="eyebrow-dot" aria-hidden="true"></span>
-                        {availableCount} available right now
+                        {listings.length} available right now
                     </span>
 
                     <h1>
@@ -102,57 +200,85 @@ function Home() {
                     </p>
                 </header>
 
+                {filterBar}
+
                 {error && <div className="alert alert-error home-error">⚠️ {error}</div>}
 
                 {listings.length === 0 ? (
                     <div className="home-empty">
                         <div className="empty-icon" aria-hidden="true">📭</div>
-                        <h3>No listings yet</h3>
-                        <p>Check back soon — businesses are posting surplus food daily.</p>
+                        <h3>No listings match your search</h3>
+                        <p>Try a different search term, or clear your filters.</p>
                     </div>
                 ) : (
                     <div className="listings-grid">
-                        {listings.map((listing, index) => {
-                            const isExpired = new Date(listing.expiryTime) < new Date();
-                            return (
-                                <article
-                                    className={`listing-card ${isExpired ? 'expired' : ''}`}
-                                    key={listing._id}
-                                    style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}
-                                >
+                        {listings.map((listing, index) => (
+                            <article
+                                className="listing-card"
+                                key={listing._id}
+                                style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}
+                            >
+                                {listing.imageUrl ? (
+                                    <img
+                                        className="card-image"
+                                        src={getImageUrl(listing.imageUrl)}
+                                        alt={listing.title}
+                                    />
+                                ) : (
                                     <div className="card-header">
                                         <span className="tile" aria-hidden="true">
                                             {getFoodTypeEmoji(listing.foodType)}
                                         </span>
                                         <div className="card-heading">
                                             <span className="food-type-badge">{listing.foodType}</span>
-                                            <span className={`badge expiry-badge ${getExpiryTone(listing.expiryTime)}`}>
+                                            <span
+                                                className={`badge expiry-badge ${getExpiryTone(listing.expiryTime)}`}
+                                            >
                                                 {formatExpiry(listing.expiryTime)}
                                             </span>
                                         </div>
                                     </div>
+                                )}
 
-                                    <h3 className="card-title">{listing.title}</h3>
-                                    <p className="card-description">{listing.description}</p>
-
-                                    <div className="card-meta">
-                                        <div className="meta-item">
-                                            <span className="meta-label">Quantity</span>
-                                            <span className="meta-value">{listing.quantity}</span>
-                                        </div>
-                                        <div className="meta-item">
-                                            <span className="meta-label">Posted by</span>
-                                            <span className="meta-value with-avatar">
-                                                <span className="meta-avatar" aria-hidden="true">
-                                                    {(listing.business?.name || 'U').charAt(0).toUpperCase()}
-                                                </span>
-                                                {listing.business?.name || 'Unknown'}
-                                            </span>
-                                        </div>
+                                {listing.imageUrl && (
+                                    <div className="card-header card-header-compact">
+                                        <span className="food-type-badge">
+                                            {getFoodTypeEmoji(listing.foodType)} {listing.foodType}
+                                        </span>
+                                        <span
+                                            className={`badge expiry-badge ${getExpiryTone(listing.expiryTime)}`}
+                                        >
+                                            {formatExpiry(listing.expiryTime)}
+                                        </span>
                                     </div>
-                                </article>
-                            );
-                        })}
+                                )}
+
+                                <h3 className="card-title">{listing.title}</h3>
+                                <p className="card-description">{listing.description}</p>
+
+                                {(listing.neighborhood || listing.city) && (
+                                    <p className="card-location">
+                                        📍 {[listing.neighborhood, listing.city].filter(Boolean).join(', ')}
+                                    </p>
+                                )}
+
+                                <div className="card-meta">
+                                    <div className="meta-item">
+                                        <span className="meta-label">Quantity</span>
+                                        <span className="meta-value">{listing.quantity}</span>
+                                    </div>
+                                    <div className="meta-item">
+                                        <span className="meta-label">Posted by</span>
+                                        <span className="meta-value with-avatar">
+                                            <span className="meta-avatar" aria-hidden="true">
+                                                {(listing.business?.name || 'U').charAt(0).toUpperCase()}
+                                            </span>
+                                            {listing.business?.name || 'Unknown'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
                     </div>
                 )}
             </div>
