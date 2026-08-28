@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API, { getImageUrl } from '../../api';
 import './Home.css';
 
@@ -9,9 +10,11 @@ const initialFilters = {
 };
 
 function Home() {
+    const navigate = useNavigate();
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [user, setUser] = useState(null);
     const [searchInput, setSearchInput] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('');
     const [filters, setFilters] = useState(initialFilters);
@@ -25,6 +28,11 @@ function Home() {
 
     // Build the city suggestion list once, from the unfiltered feed
     useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+
         const loadCities = async () => {
             try {
                 const res = await API.get('/listings');
@@ -67,6 +75,16 @@ function Home() {
     const clearFilters = () => {
         setSearchInput('');
         setFilters(initialFilters);
+    };
+
+    const handleClaim = async (listingId) => {
+        try {
+            await API.post('/claims', { listingId });
+            navigate('/dashboard');
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || 'Failed to claim listing');
+        }
     };
 
     const hasActiveFilters =
@@ -277,6 +295,18 @@ function Home() {
                                         </span>
                                     </div>
                                 </div>
+
+                                {user && user.role === 'Consumer' && listing.status === 'active' && listing.quantity > 0 && (
+                                    <div className="card-actions" style={{ padding: '1.25rem', paddingTop: '0', marginTop: 'auto' }}>
+                                        <button 
+                                            className="btn btn-primary" 
+                                            style={{ width: '100%' }}
+                                            onClick={() => handleClaim(listing._id)}
+                                        >
+                                            Claim
+                                        </button>
+                                    </div>
+                                )}
                             </article>
                         ))}
                     </div>

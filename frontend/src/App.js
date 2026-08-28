@@ -7,6 +7,7 @@ import AdminDashboard from './components/member4/AdminDashboard';
 import Profile from './components/member1/Profile';
 import CreateListing from './components/member2/CreateListing';
 import Home from './components/member3/Home';
+import ConsumerDashboard from './components/member3/ConsumerDashboard';
 
 function App() {
     return (
@@ -25,6 +26,7 @@ function App() {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/business" element={<CreateListing />} />
                         <Route path="/business/listings" element={<CreateListing />} />
+                        <Route path="/dashboard" element={<ConsumerDashboard />} />
                     </Routes>
                 </main>
 

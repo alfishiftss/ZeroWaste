@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const listingRoutes = require('./routes/listingRoutes');
+const claimRoutes = require('./routes/claimRoutes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ connectDatabase();
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
+app.use('/api/claims', claimRoutes);
 
 // Basic Test Route
 app.get('/', (req, res) => {
