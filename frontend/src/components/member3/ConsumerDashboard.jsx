@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API, { getImageUrl } from '../../api';
+import API from '../../api';
 import './ConsumerDashboard.css';
 
 function ConsumerDashboard() {
