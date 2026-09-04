@@ -6,6 +6,8 @@ const {
     getAllListings,
     updateListing,
     deleteListing,
+    claimListing,
+    verifyOtp,
 } = require('../controllers/listingController');
 const { protect, authorize } = require('../middleware/auth');
 const uploadListing = require('../middleware/uploadListing');
@@ -15,5 +17,7 @@ router.post('/', protect, authorize('Business'), uploadListing.single('image'), 
 router.get('/mine', protect, authorize('Business'), getMyListings);
 router.put('/:id', protect, authorize('Business'), uploadListing.single('image'), updateListing);
 router.delete('/:id', protect, authorize('Business'), deleteListing);
+router.post('/:id/claim', protect, authorize('Consumer'), claimListing);
+router.post('/:id/verify-otp', protect, authorize('Business'), verifyOtp);
 
 module.exports = router;

@@ -1,0 +1,173 @@
+/* ── Support / Contact Form ──────────────────────────────── */
+
+.support-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.25rem 4rem;
+    overflow: hidden;
+}
+
+/* Ambient glow behind card */
+.support-container::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 800px;
+    height: 800px;
+    max-width: 150vw;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.14), transparent 62%);
+    pointer-events: none;
+}
+
+.support-card {
+    position: relative;
+    width: 100%;
+    max-width: 580px;
+    padding: 2.6rem 2.1rem 2.2rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.028));
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-xl);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    box-shadow: var(--shadow-2);
+    animation: fadeSlideUp 0.5s var(--t-slow) both;
+}
+
+.support-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(134, 239, 172, 0.55), transparent);
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+.support-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.support-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1.1rem;
+    font-size: 1.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--stroke-brand);
+    background: linear-gradient(150deg, rgba(74, 222, 128, 0.2), rgba(16, 185, 129, 0.05));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 12px 30px -14px rgba(34, 197, 94, 0.8);
+}
+
+.support-header h2 {
+    font-size: 1.72rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.45rem;
+}
+
+.support-header p {
+    color: var(--text-3);
+    font-size: 0.92rem;
+}
+
+.support-alert {
+    margin-bottom: 1.5rem;
+    justify-content: center;
+    text-align: center;
+}
+
+.support-submit-btn {
+    margin-top: 0.25rem;
+    padding-top: 0.92rem;
+    padding-bottom: 0.92rem;
+    font-size: 1rem;
+}
+
+/* ── Success State ───────────────────────────────────────── */
+
+.support-success-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    animation: fadeSlideUp 0.5s var(--t-slow) both;
+}
+
+.support-success-block h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.success-detail {
+    color: var(--text-2);
+    font-size: 0.92rem;
+    max-width: 380px;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+/* Animated checkmark */
+.success-checkmark {
+    width: 72px;
+    height: 72px;
+}
+
+.success-checkmark svg {
+    width: 100%;
+    height: 100%;
+}
+
+.checkmark-circle {
+    stroke: var(--brand-400);
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: checkCircle 0.6s 0.1s ease-out forwards;
+}
+
+.checkmark-check {
+    stroke: var(--brand-400);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: checkStroke 0.35s 0.5s ease-out forwards;
+}
+
+@keyframes checkCircle {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes checkStroke {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+    .support-container {
+        padding: 2rem 1rem 3rem;
+    }
+
+    .support-card {
+        padding: 2.1rem 1.4rem 1.8rem;
+        border-radius: var(--r-lg);
+    }
+}

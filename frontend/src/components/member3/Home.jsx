@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API, { getImageUrl } from '../../api';
 import './Home.css';
 
@@ -16,6 +16,55 @@ function Home() {
     const [debouncedQuery, setDebouncedQuery] = useState('');
     const [filters, setFilters] = useState(initialFilters);
     const [cityOptions, setCityOptions] = useState([]);
+    const [impactStats, setImpactStats] = useState({ mealsSaved: 0, totalListings: 0, activeDonors: 0 });
+    const [claimingId, setClaimingId] = useState(null);
+    const [claimMsg, setClaimMsg] = useState({ id: '', text: '', type: '' });
+
+    // Animated counter refs
+    const [displayedMeals, setDisplayedMeals] = useState(0);
+    const animFrame = useRef(null);
+
+    // Fetch impact stats
+    useEffect(() => {
+        const fetchImpact = async () => {
+            try {
+                const res = await API.get('/impact/stats');
+                setImpactStats(res.data);
+            } catch (err) {
+                // Non-critical
+            }
+        };
+        fetchImpact();
+    }, []);
+
+    // Animate the meals counter
+    useEffect(() => {
+        const target = impactStats.mealsSaved;
+        const duration = 1200;
+        const startTime = performance.now();
+        const startVal = displayedMeals;
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setDisplayedMeals(Math.round(startVal + (target - startVal) * eased));
+
+            if (progress < 1) {
+                animFrame.current = requestAnimationFrame(animate);
+            }
+        };
+
+        if (target !== startVal) {
+            animFrame.current = requestAnimationFrame(animate);
+        }
+
+        return () => {
+            if (animFrame.current) cancelAnimationFrame(animFrame.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [impactStats.mealsSaved]);
 
     // Debounce the free-text search so we don't fire a request per keystroke
     useEffect(() => {
@@ -93,6 +142,45 @@ function Home() {
         if (diffMs < 0) return 'badge-danger';
         if (diffMs < 3 * 60 * 60 * 1000) return 'badge-warn urgent';
         return 'badge-ok';
+    };
+
+    // Claim handler
+    const handleClaim = async (listingId) => {
+        const user = localStorage.getItem('user');
+        if (!user) {
+            setClaimMsg({ id: listingId, text: 'Please log in to claim listings', type: 'error' });
+            return;
+        }
+        const parsed = JSON.parse(user);
+        if (parsed.role !== 'Consumer') {
+            setClaimMsg({ id: listingId, text: 'Only consumers can claim listings', type: 'error' });
+            return;
+        }
+
+        setClaimingId(listingId);
+        setClaimMsg({ id: '', text: '', type: '' });
+
+        try {
+            const res = await API.post(`/listings/${listingId}/claim`);
+            // Update listing in local state
+            setListings((prev) =>
+                prev.map((l) =>
+                    l._id === listingId ? { ...l, status: 'claimed' } : l
+                )
+            );
+            
+            setClaimMsg({ id: listingId, text: res.data.message, type: 'success' });
+            
+            // Pop up the OTP for the demo
+            if (res.data.otp) {
+                alert(`OTP Sent! Your pickup code is: ${res.data.otp}\nShow this to the business to complete the order.`);
+            }
+            
+        } catch (err) {
+            setClaimMsg({ id: listingId, text: err.response?.data?.message || 'Claim failed', type: 'error' });
+        } finally {
+            setClaimingId(null);
+        }
     };
 
     const filterBar = (
@@ -184,6 +272,25 @@ function Home() {
     return (
         <div className="home-container page">
             <div className="page-inner">
+                {/* ── Impact Stats Banner ──────────────────── */}
+                <div className="impact-banner">
+                    <div className="impact-card impact-hero-card">
+                        <span className="impact-emoji" aria-hidden="true">🍽️</span>
+                        <span className="impact-number">{displayedMeals.toLocaleString()}</span>
+                        <span className="impact-label">Meals Saved</span>
+                    </div>
+                    <div className="impact-card">
+                        <span className="impact-emoji" aria-hidden="true">📦</span>
+                        <span className="impact-number">{impactStats.totalListings}</span>
+                        <span className="impact-label">Total Listings</span>
+                    </div>
+                    <div className="impact-card">
+                        <span className="impact-emoji" aria-hidden="true">🏪</span>
+                        <span className="impact-number">{impactStats.activeDonors}</span>
+                        <span className="impact-label">Active Donors</span>
+                    </div>
+                </div>
+
                 <header className="home-hero">
                     <span className="eyebrow">
                         <span className="eyebrow-dot" aria-hidden="true"></span>
@@ -214,7 +321,7 @@ function Home() {
                     <div className="listings-grid">
                         {listings.map((listing, index) => (
                             <article
-                                className="listing-card"
+                                className={`listing-card ${listing.status !== 'active' ? 'listing-claimed' : ''}`}
                                 key={listing._id}
                                 style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}
                             >
@@ -276,6 +383,38 @@ function Home() {
                                             {listing.business?.name || 'Unknown'}
                                         </span>
                                     </div>
+                                </div>
+
+                                {/* Claim section */}
+                                <div className="card-claim-section">
+                                    {listing.status === 'active' ? (
+                                        <>
+                                            <button
+                                                className="btn btn-primary btn-sm btn-claim"
+                                                onClick={() => handleClaim(listing._id)}
+                                                disabled={claimingId === listing._id}
+                                                id={`claim-${listing._id}`}
+                                            >
+                                                {claimingId === listing._id ? (
+                                                    <>
+                                                        <span className="loading-spinner small" aria-hidden="true"></span>
+                                                        Claiming...
+                                                    </>
+                                                ) : (
+                                                    '🤝 Claim This'
+                                                )}
+                                            </button>
+                                            {claimMsg.id === listing._id && (
+                                                <span className={`claim-feedback ${claimMsg.type}`}>
+                                                    {claimMsg.text}
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <span className="badge badge-warn claim-status-badge">
+                                            ✅ Claimed
+                                        </span>
+                                    )}
                                 </div>
                             </article>
                         ))}

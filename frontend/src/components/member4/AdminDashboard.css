@@ -27,6 +27,77 @@
     font-weight: 700;
 }
 
+/* ---- Tabs ---- */
+
+.admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--stroke);
+    padding-bottom: 0;
+}
+
+.admin-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: none;
+    border: none;
+    color: var(--text-3);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: color var(--t-fast), background var(--t-fast);
+    border-radius: var(--r-xs) var(--r-xs) 0 0;
+}
+
+.admin-tab:hover {
+    color: var(--text);
+    background: var(--surface-1);
+}
+
+.admin-tab.active {
+    color: var(--brand-300);
+    background: var(--surface-1);
+}
+
+.admin-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: var(--brand-400);
+    border-radius: var(--r-full);
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+}
+
+.tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    border-radius: var(--r-full);
+    background: var(--surface-2);
+    color: var(--text-2);
+    border: 1px solid var(--stroke);
+}
+
+.tab-count.alert-count {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    border-color: transparent;
+    animation: notifPop 0.35s var(--t-slow) both;
+}
+
 /* ---- Stats ---- */
 
 .admin-stats {
@@ -75,8 +146,107 @@
     color: var(--ok);
 }
 
+/* ── Support Tickets ─────────────────────────────────────── */
+
+.tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1rem;
+}
+
+.ticket-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-lg);
+    transition: transform var(--t), border-color var(--t), box-shadow var(--t);
+    animation: fadeSlideUp 0.4s var(--t-slow) both;
+}
+
+.ticket-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--stroke-strong);
+    box-shadow: var(--shadow-2);
+}
+
+.ticket-card.ticket-resolved {
+    opacity: 0.65;
+}
+
+.ticket-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.ticket-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.ticket-name {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--text);
+}
+
+.ticket-email {
+    font-size: 0.78rem;
+    color: var(--text-4);
+}
+
+.ticket-subject {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.ticket-message {
+    font-size: 0.88rem;
+    color: var(--text-2);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ticket-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--stroke);
+    margin-top: auto;
+}
+
+.ticket-date {
+    font-size: 0.78rem;
+    color: var(--text-4);
+    font-weight: 550;
+}
+
+.ticket-resolve-btn {
+    flex-shrink: 0;
+}
+
 @media (max-width: 620px) {
     .admin-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-tabs {
+        flex-wrap: wrap;
+    }
+
+    .tickets-grid {
         grid-template-columns: 1fr;
     }
 }

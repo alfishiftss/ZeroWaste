@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, getMyProfile, updateProfile, uploadProfilePicture, changePassword, getAllUsers } = require('../controllers/authController');
+const { register, login, getMyProfile, updateProfile, uploadProfilePicture, changePassword, getAllUsers, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 // Private routes — any authenticated user
 router.get('/me', protect, getMyProfile);
