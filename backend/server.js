@@ -8,6 +8,11 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const listingRoutes = require('./routes/listingRoutes');
 const claimRoutes = require('./routes/claimRoutes');
+const moderationRoutes = require('./routes/M4_moderationRoutes');
+const impactRoutes = require('./routes/impactRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const supportRoutes = require('./routes/supportRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
@@ -65,6 +70,11 @@ connectDatabase();
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/claims', claimRoutes);
+app.use('/api/moderation', moderationRoutes);
+app.use('/api/impact', impactRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Basic Test Route
 app.get('/', (req, res) => {
