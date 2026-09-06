@@ -24,6 +24,12 @@ function Home() {
     const [displayedMeals, setDisplayedMeals] = useState(0);
     const animFrame = useRef(null);
 
+    // Business Reviews Modal State
+    const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
+    const [businessReviews, setBusinessReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+
     // Fetch impact stats
     useEffect(() => {
         const fetchImpact = async () => {
@@ -180,6 +186,23 @@ function Home() {
             setClaimMsg({ id: listingId, text: err.response?.data?.message || 'Claim failed', type: 'error' });
         } finally {
             setClaimingId(null);
+        }
+    };
+
+    const handleViewReviews = async (business) => {
+        if (!business || !business._id) return;
+        setSelectedBusiness(business);
+        setReviewsModalOpen(true);
+        setReviewsLoading(true);
+        setBusinessReviews([]);
+
+        try {
+            const res = await API.get(`/reviews/business/${business._id}`);
+            setBusinessReviews(res.data);
+        } catch (err) {
+            // Handle silently or show toast
+        } finally {
+            setReviewsLoading(false);
         }
     };
 
@@ -381,6 +404,12 @@ function Home() {
                                                 {(listing.business?.name || 'U').charAt(0).toUpperCase()}
                                             </span>
                                             {listing.business?.name || 'Unknown'}
+                                            <button 
+                                                className="btn-link-sm"
+                                                onClick={() => handleViewReviews(listing.business)}
+                                            >
+                                                (Reviews)
+                                            </button>
                                         </span>
                                     </div>
                                 </div>
@@ -421,6 +450,48 @@ function Home() {
                     </div>
                 )}
             </div>
+
+            {/* Business Reviews Modal */}
+            {reviewsModalOpen && (
+                <div className="business-reviews-overlay" onClick={() => setReviewsModalOpen(false)}>
+                    <div className="business-reviews-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Reviews for {selectedBusiness?.name}</h3>
+
+                        {reviewsLoading ? (
+                            <div className="state-block">
+                                <div className="loading-spinner"></div>
+                                <p>Loading reviews...</p>
+                            </div>
+                        ) : businessReviews.length === 0 ? (
+                            <div className="state-block">
+                                <p>No reviews yet for this business.</p>
+                            </div>
+                        ) : (
+                            <div className="reviews-list">
+                                {businessReviews.map((review) => (
+                                    <div className="review-item" key={review._id}>
+                                        <div className="review-header">
+                                            <span className="review-author">
+                                                {review.user?.name || 'Anonymous'}
+                                            </span>
+                                            <span className="review-stars">
+                                                {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                                            </span>
+                                        </div>
+                                        {review.reviewText && (
+                                            <p className="review-text">{review.reviewText}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button className="btn btn-secondary modal-close-btn" onClick={() => setReviewsModalOpen(false)}>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

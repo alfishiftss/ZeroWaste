@@ -76,6 +76,21 @@ const getMyListings = async (req, res) => {
     }
 };
 
+// @desc    Get listings claimed by the consumer
+// @route   GET /api/listings/pickups
+// @access  Private/Consumer
+const getMyPickups = async (req, res) => {
+    try {
+        const listings = await Listing.find({ claimedBy: req.user.id })
+            .sort({ updatedAt: -1 })
+            .populate('business', 'name email role phone');
+
+        res.json(listings);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching pickups' });
+    }
+};
+
 // @desc    Get active listings for the public feed — supports search + filters
 // @route   GET /api/listings?q=&city=&foodType=&endingSoon=true
 // @access  Public
@@ -328,4 +343,4 @@ const verifyOtp = async (req, res) => {
     }
 };
 
-module.exports = { createListing, getMyListings, getAllListings, updateListing, deleteListing, claimListing, verifyOtp };
+module.exports = { createListing, getMyListings, getMyPickups, getAllListings, updateListing, deleteListing, claimListing, verifyOtp };
