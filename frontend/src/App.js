@@ -12,6 +12,7 @@ import Home from './components/member3/Home';
 import ConsumerDashboard from './components/member3/ConsumerDashboard';
 import Support from './components/member4/Support';
 
+
 function App() {
     return (
         <Router>
@@ -32,7 +33,11 @@ function App() {
                         <Route path="/dashboard" element={<ConsumerDashboard />} />
                         <Route path="/business" element={<CreateListing />} />
                         <Route path="/business/listings" element={<CreateListing />} />
+
+                        <Route path="/dashboard" element={<ConsumerDashboard />} />
+
                         <Route path="/support" element={<Support />} />
+
                     </Routes>
                 </main>
 

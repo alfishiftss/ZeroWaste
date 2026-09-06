@@ -102,7 +102,11 @@ function Navbar() {
                     {user && user.role === 'Consumer' && (
                         <li>
                             <Link to="/dashboard" className={linkClass('/dashboard')}>
+
+                                My Claims
+
                                 My Pickups
+
                             </Link>
                         </li>
                     )}

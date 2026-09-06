@@ -7,6 +7,8 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const listingRoutes = require('./routes/listingRoutes');
+const claimRoutes = require('./routes/claimRoutes');
+
 const moderationRoutes = require('./routes/M4_moderationRoutes');
 const impactRoutes = require('./routes/impactRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
@@ -68,6 +70,8 @@ connectDatabase();
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
+const claimRoutes = require('./routes/claimRoutes');
+
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/impact', impactRoutes);
 app.use('/api/notifications', notificationRoutes);
