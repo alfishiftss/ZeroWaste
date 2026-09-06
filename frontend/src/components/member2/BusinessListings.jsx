@@ -37,6 +37,7 @@ function BusinessListings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
@@ -116,8 +117,6 @@ function BusinessListings() {
     };
 
     const handleDelete = async (listingId) => {
-        if (!window.confirm('Delete this listing? This cannot be undone.')) return;
-
         setDeletingId(listingId);
         setError('');
         setMessage('');
@@ -131,9 +130,15 @@ function BusinessListings() {
             setError(err.response?.data?.message || 'Could not delete listing');
         } finally {
             setDeletingId(null);
+            setConfirmDeleteId(null);
         }
     };
+    // Inline delete confirmation toggler
+    const requestDelete = (listingId) => {
+        setConfirmDeleteId((current) => (current === listingId ? null : listingId));
+    };
 
+    // OTP verification for claimed listings (merged from main)
     const [otpInputs, setOtpInputs] = useState({});
     const [verifyingId, setVerifyingId] = useState(null);
 
@@ -350,6 +355,7 @@ function BusinessListings() {
                                         onChange={handleChange}
                                         required
                                     />
+                                    <div className="field-help">Number of items available for pickup.</div>
                                 </div>
 
                                 <div className="form-group">
@@ -405,6 +411,7 @@ function BusinessListings() {
                                     onChange={handleChange}
                                     required
                                 />
+                                <div className="field-help">Local date and time when the listing should be removed.</div>
                             </div>
 
                             <div className="form-group">
@@ -416,6 +423,7 @@ function BusinessListings() {
                                     accept="image/png, image/jpeg, image/gif, image/webp"
                                     onChange={handleImageChange}
                                 />
+                                <div className="field-help">Optional — helps buyers identify items. Max 5MB recommended.</div>
                                 {(imagePreview || (editingId && listings.find((l) => l._id === editingId)?.imageUrl)) && (
                                     <img
                                         className="image-preview"
@@ -504,7 +512,15 @@ function BusinessListings() {
                                         </div>
 
                                         <div className="listing-actions">
-                                            {listing.status === 'claimed' ? (
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary btn-sm"
+                                                onClick={() => startEdit(listing)}
+                                            >
+                                                Edit
+                                            </button>
+
+                                            {listing.status === 'claimed' && (
                                                 <div className="otp-verify-group">
                                                     <input
                                                         type="text"
@@ -520,28 +536,44 @@ function BusinessListings() {
                                                         type="button"
                                                         className="btn btn-primary btn-sm"
                                                         onClick={() => handleVerifyOtp(listing._id)}
-                                                        disabled={verifyingId === listing._id || (otpInputs[listing._id]?.length !== 4)}
+                                                        disabled={
+                                                            verifyingId === listing._id || (otpInputs[listing._id]?.length !== 4)
+                                                        }
                                                     >
                                                         {verifyingId === listing._id ? 'Verifying...' : 'Verify Pickup'}
                                                     </button>
                                                 </div>
+                                            )}
+
+                                            {confirmDeleteId === listing._id ? (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-danger btn-sm"
+                                                        onClick={() => handleDelete(listing._id)}
+                                                        disabled={deletingId === listing._id}
+                                                    >
+                                                        {deletingId === listing._id ? 'Deleting...' : 'Confirm Delete'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={() => requestDelete(null)}
+                                                        disabled={deletingId === listing._id}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <button
                                                     type="button"
-                                                    className="btn btn-secondary btn-sm"
-                                                    onClick={() => startEdit(listing)}
+                                                    className="btn btn-danger-ghost btn-sm"
+                                                    onClick={() => requestDelete(listing._id)}
+                                                    disabled={deletingId === listing._id}
                                                 >
-                                                    Edit
+                                                    Delete
                                                 </button>
                                             )}
-                                            <button
-                                                type="button"
-                                                className="btn btn-danger-ghost btn-sm"
-                                                onClick={() => handleDelete(listing._id)}
-                                                disabled={deletingId === listing._id}
-                                            >
-                                                {deletingId === listing._id ? 'Deleting...' : 'Delete'}
-                                            </button>
                                         </div>
                                     </article>
                                 ))}
