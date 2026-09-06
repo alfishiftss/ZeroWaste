@@ -42,8 +42,6 @@
     margin: 0;
 }
 
-.claims-grid {
-=======
 .dashboard-hero {
     margin-bottom: 2rem;
 }
@@ -56,8 +54,8 @@
     color: var(--text-muted);
 }
 
+.claims-grid,
 .pickups-grid {
-
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
@@ -167,6 +165,7 @@
 
 .text-muted {
     color: var(--text-muted, #9ca3af);
+}
 
 .pickup-card {
     background: var(--surface);

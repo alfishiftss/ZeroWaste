@@ -1,8 +1,5 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import API, { getImageUrl } from '../../api';
 import './Home.css';
@@ -136,15 +133,6 @@ function Home() {
         setFilters(initialFilters);
     };
 
-    const handleClaim = async (listingId) => {
-        try {
-            await API.post('/claims', { listingId });
-            navigate('/dashboard');
-        } catch (err) {
-            console.error(err);
-            alert(err.response?.data?.message || 'Failed to claim listing');
-        }
-    };
 
     const hasActiveFilters =
         searchInput.trim() || filters.city.trim() || filters.foodType || filters.endingSoon;
