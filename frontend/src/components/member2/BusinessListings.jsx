@@ -3,16 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import API, { getImageUrl } from '../../api';
 import './BusinessListings.css';
 
-const initialForm = {
-    title: '',
-    description: '',
-    quantity: '',
-    foodType: 'Veg',
-    expiryTime: '',
-    city: '',
-    neighborhood: '',
-};
-
 // Format a Date/ISO string into the value a <input type="datetime-local"> expects
 const toDateTimeLocal = (value) => {
     const date = new Date(value);
@@ -23,6 +13,16 @@ const toDateTimeLocal = (value) => {
     )}:${pad(date.getMinutes())}`;
 };
 
+const getInitialForm = () => ({
+    title: '',
+    description: '',
+    quantity: '',
+    foodType: 'Veg',
+    expiryTime: toDateTimeLocal(new Date(Date.now() + 24 * 60 * 60 * 1000)), // Default 24 hours
+    city: '',
+    neighborhood: '',
+});
+
 function BusinessListings() {
     const navigate = useNavigate();
     const [user] = useState(() => {
@@ -30,7 +30,7 @@ function BusinessListings() {
         return stored ? JSON.parse(stored) : null;
     });
     const [listings, setListings] = useState([]);
-    const [formData, setFormData] = useState(initialForm);
+    const [formData, setFormData] = useState(getInitialForm());
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
     const [editingId, setEditingId] = useState(null);
@@ -92,7 +92,7 @@ function BusinessListings() {
     };
 
     const resetForm = () => {
-        setFormData(initialForm);
+        setFormData(getInitialForm());
         setImageFile(null);
         setImagePreview('');
         setEditingId(null);
@@ -133,10 +133,38 @@ function BusinessListings() {
             setConfirmDeleteId(null);
         }
     };
-
+    // Inline delete confirmation toggler
     const requestDelete = (listingId) => {
-        // toggle inline confirmation
         setConfirmDeleteId((current) => (current === listingId ? null : listingId));
+    };
+
+    // OTP verification for claimed listings (merged from main)
+    const [otpInputs, setOtpInputs] = useState({});
+    const [verifyingId, setVerifyingId] = useState(null);
+
+    const handleVerifyOtp = async (listingId) => {
+        const otp = otpInputs[listingId];
+        if (!otp || otp.length !== 4) {
+            setError('Please enter a 4-digit OTP');
+            return;
+        }
+
+        setVerifyingId(listingId);
+        setError('');
+        setMessage('');
+
+        try {
+            const res = await API.post(`/listings/${listingId}/verify-otp`, { otp });
+            setListings((current) =>
+                current.map((listing) => (listing._id === listingId ? res.data.listing : listing))
+            );
+            setMessage('OTP verified! Order completed.');
+            setOtpInputs((prev) => ({ ...prev, [listingId]: '' }));
+        } catch (err) {
+            setError(err.response?.data?.message || 'Invalid OTP');
+        } finally {
+            setVerifyingId(null);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -491,6 +519,32 @@ function BusinessListings() {
                                             >
                                                 Edit
                                             </button>
+
+                                            {listing.status === 'claimed' && (
+                                                <div className="otp-verify-group">
+                                                    <input
+                                                        type="text"
+                                                        maxLength={4}
+                                                        placeholder="4-digit OTP"
+                                                        className="otp-input"
+                                                        value={otpInputs[listing._id] || ''}
+                                                        onChange={(e) =>
+                                                            setOtpInputs({ ...otpInputs, [listing._id]: e.target.value.replace(/\D/g, '') })
+                                                        }
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary btn-sm"
+                                                        onClick={() => handleVerifyOtp(listing._id)}
+                                                        disabled={
+                                                            verifyingId === listing._id || (otpInputs[listing._id]?.length !== 4)
+                                                        }
+                                                    >
+                                                        {verifyingId === listing._id ? 'Verifying...' : 'Verify Pickup'}
+                                                    </button>
+                                                </div>
+                                            )}
+
                                             {confirmDeleteId === listing._id ? (
                                                 <>
                                                     <button

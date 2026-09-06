@@ -76,6 +76,7 @@ function Login() {
                             onChange={handleChange}
                             required
                         />
+                        <Link to="/forgot-password" className="forgot-pw-link">Forgot Password?</Link>
                     </div>
 
                     <button

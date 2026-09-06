@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import NotificationBell from '../member4/NotificationBell';
 import './Navbar.css';
 
 function Navbar() {
@@ -82,6 +83,8 @@ function Navbar() {
                 <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
                     <li><Link to="/" className={linkClass('/')}>Home</Link></li>
 
+                    <li><Link to="/support" className={linkClass('/support')}>Support</Link></li>
+
                     {user && user.role === 'Admin' && (
                         <li>
                             <Link to="/admin" className={linkClass('/admin')}>Admin Panel</Link>
@@ -98,6 +101,9 @@ function Navbar() {
 
                     {user ? (
                         <>
+                            <li className="nav-notif-item">
+                                <NotificationBell />
+                            </li>
                             <li className="nav-user-info">
                                 <Link to="/profile" className="nav-profile-link">
                                     {getAvatarUrl() ? (

@@ -229,3 +229,30 @@
         flex-direction: column;
     }
 }
+
+/* ── OTP Verification ────────────────────────────────────── */
+
+.otp-verify-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.otp-input {
+    width: 90px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.1em;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    outline: none;
+    transition: border-color var(--t);
+}
+
+.otp-input:focus {
+    border-color: rgba(74, 222, 128, 0.55);
+}

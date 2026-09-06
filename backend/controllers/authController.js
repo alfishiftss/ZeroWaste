@@ -253,4 +253,79 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-module.exports = { register, login, getMyProfile, updateProfile, uploadProfilePicture, changePassword, getAllUsers };
+// @desc    Request a password reset code
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Please provide your email address' });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            // Don't reveal whether the email exists
+            return res.json({
+                message: 'If an account with that email exists, a reset code has been sent.',
+            });
+        }
+
+        // Generate 6-digit reset code
+        const resetCode = String(Math.floor(100000 + Math.random() * 900000));
+
+        // Store code with 15-minute expiry
+        user.resetPasswordCode = resetCode;
+        user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+        await user.save();
+
+        // In production, send this via email. For demo, return in response.
+        res.json({
+            message: 'If an account with that email exists, a reset code has been sent.',
+            // Demo only — remove in production
+            _demoCode: resetCode,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error processing password reset request' });
+    }
+};
+
+// @desc    Reset password using the code
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+    try {
+        const { email, code, newPassword } = req.body;
+
+        if (!email || !code || !newPassword) {
+            return res.status(400).json({ message: 'Please provide email, code, and new password' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'New password must be at least 6 characters' });
+        }
+
+        const user = await User.findOne({
+            email: email.toLowerCase().trim(),
+            resetPasswordCode: code,
+            resetPasswordExpires: { $gt: new Date() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired reset code' });
+        }
+
+        // Set new password (hashed via pre-save hook)
+        user.password = newPassword;
+        user.resetPasswordCode = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        res.json({ message: 'Password has been reset successfully. You can now log in.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error resetting password' });
+    }
+};
+
+module.exports = { register, login, getMyProfile, updateProfile, uploadProfilePicture, changePassword, getAllUsers, forgotPassword, resetPassword };
