@@ -37,6 +37,7 @@ function BusinessListings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
@@ -116,8 +117,6 @@ function BusinessListings() {
     };
 
     const handleDelete = async (listingId) => {
-        if (!window.confirm('Delete this listing? This cannot be undone.')) return;
-
         setDeletingId(listingId);
         setError('');
         setMessage('');
@@ -131,7 +130,13 @@ function BusinessListings() {
             setError(err.response?.data?.message || 'Could not delete listing');
         } finally {
             setDeletingId(null);
+            setConfirmDeleteId(null);
         }
+    };
+
+    const requestDelete = (listingId) => {
+        // toggle inline confirmation
+        setConfirmDeleteId((current) => (current === listingId ? null : listingId));
     };
 
     const handleSubmit = async (e) => {
@@ -322,6 +327,7 @@ function BusinessListings() {
                                         onChange={handleChange}
                                         required
                                     />
+                                    <div className="field-help">Number of items available for pickup.</div>
                                 </div>
 
                                 <div className="form-group">
@@ -377,6 +383,7 @@ function BusinessListings() {
                                     onChange={handleChange}
                                     required
                                 />
+                                <div className="field-help">Local date and time when the listing should be removed.</div>
                             </div>
 
                             <div className="form-group">
@@ -388,6 +395,7 @@ function BusinessListings() {
                                     accept="image/png, image/jpeg, image/gif, image/webp"
                                     onChange={handleImageChange}
                                 />
+                                <div className="field-help">Optional — helps buyers identify items. Max 5MB recommended.</div>
                                 {(imagePreview || (editingId && listings.find((l) => l._id === editingId)?.imageUrl)) && (
                                     <img
                                         className="image-preview"
@@ -483,14 +491,35 @@ function BusinessListings() {
                                             >
                                                 Edit
                                             </button>
-                                            <button
-                                                type="button"
-                                                className="btn btn-danger-ghost btn-sm"
-                                                onClick={() => handleDelete(listing._id)}
-                                                disabled={deletingId === listing._id}
-                                            >
-                                                {deletingId === listing._id ? 'Deleting...' : 'Delete'}
-                                            </button>
+                                            {confirmDeleteId === listing._id ? (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-danger btn-sm"
+                                                        onClick={() => handleDelete(listing._id)}
+                                                        disabled={deletingId === listing._id}
+                                                    >
+                                                        {deletingId === listing._id ? 'Deleting...' : 'Confirm Delete'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={() => requestDelete(null)}
+                                                        disabled={deletingId === listing._id}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-danger-ghost btn-sm"
+                                                    onClick={() => requestDelete(listing._id)}
+                                                    disabled={deletingId === listing._id}
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
                                         </div>
                                     </article>
                                 ))}
