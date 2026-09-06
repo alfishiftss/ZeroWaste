@@ -76,6 +76,21 @@ const getMyListings = async (req, res) => {
     }
 };
 
+// @desc    Get listings claimed by the consumer
+// @route   GET /api/listings/pickups
+// @access  Private/Consumer
+const getMyPickups = async (req, res) => {
+    try {
+        const listings = await Listing.find({ claimedBy: req.user.id })
+            .sort({ updatedAt: -1 })
+            .populate('business', 'name email role phone');
+
+        res.json(listings);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching pickups' });
+    }
+};
+
 // @desc    Get active listings for the public feed — supports search + filters
 // @route   GET /api/listings?q=&city=&foodType=&endingSoon=true
 // @access  Public
@@ -168,7 +183,7 @@ const updateListing = async (req, res) => {
         }
 
         if (status !== undefined) {
-            if (!['active', 'claimed', 'expired'].includes(status)) {
+            if (!['active', 'claimed', 'completed', 'expired'].includes(status)) {
                 return res.status(400).json({ message: 'Invalid status value' });
             }
             listing.status = status;
@@ -223,4 +238,109 @@ const deleteListing = async (req, res) => {
     }
 };
 
-module.exports = { createListing, getMyListings, getAllListings, updateListing, deleteListing };
+// @desc    Claim a listing (Consumer)
+// @route   POST /api/listings/:id/claim
+// @access  Private/Consumer
+const claimListing = async (req, res) => {
+    try {
+        const listing = await Listing.findById(req.params.id).populate('business', 'name email');
+
+        if (!listing) {
+            return res.status(404).json({ message: 'Listing not found' });
+        }
+
+        if (listing.status !== 'active') {
+            return res.status(400).json({ message: 'This listing is no longer available' });
+        }
+
+        if (new Date(listing.expiryTime) <= new Date()) {
+            return res.status(400).json({ message: 'This listing has expired' });
+        }
+
+        // Generate 4-digit OTP
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // Mark as claimed
+        listing.status = 'claimed';
+        listing.claimedBy = req.user.id;
+        listing.claimOtp = otp;
+        await listing.save();
+
+        // Create notification for the business owner
+        const Notification = require('../models/Notification');
+        const User = require('../models/User');
+        const consumer = await User.findById(req.user.id).select('name');
+
+        await Notification.create({
+            recipient: listing.business._id,
+            type: 'claim',
+            message: `${consumer?.name || 'A consumer'} claimed your listing "${listing.title}"`,
+            relatedListing: listing._id,
+        });
+
+        const populatedListing = await populateListing(listing);
+
+        res.json({
+            message: 'Listing claimed successfully!',
+            otp,
+            listing: populatedListing,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error claiming listing' });
+    }
+};
+
+// @desc    Verify OTP to complete listing (Business)
+// @route   POST /api/listings/:id/verify-otp
+// @access  Private/Business
+const verifyOtp = async (req, res) => {
+    try {
+        const { otp } = req.body;
+        const listing = await Listing.findById(req.params.id);
+
+        if (!listing) {
+            return res.status(404).json({ message: 'Listing not found' });
+        }
+
+        if (listing.business.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to verify this listing' });
+        }
+
+        if (listing.status !== 'claimed') {
+            return res.status(400).json({ message: 'Listing is not in claimed state' });
+        }
+
+        if (!listing.claimOtp || listing.claimOtp !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP code' });
+        }
+
+        // OTP matches -> Mark complete
+        listing.status = 'completed';
+        listing.claimOtp = null; // Clear the OTP for security
+        await listing.save();
+
+        // Notify consumer
+        if (listing.claimedBy) {
+            const Notification = require('../models/Notification');
+            const User = require('../models/User');
+            const businessUser = await User.findById(req.user.id).select('name');
+            await Notification.create({
+                recipient: listing.claimedBy,
+                type: 'system',
+                message: `${businessUser?.name || 'The business'} verified your pickup for "${listing.title}". Thank you for reducing waste!`,
+                relatedListing: listing._id,
+            });
+        }
+
+        const populatedListing = await populateListing(listing);
+        res.json({
+            message: 'OTP verified! Listing is now completed.',
+            listing: populatedListing,
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error verifying OTP' });
+    }
+};
+
+module.exports = { createListing, getMyListings, getMyPickups, getAllListings, updateListing, deleteListing, claimListing, verifyOtp };

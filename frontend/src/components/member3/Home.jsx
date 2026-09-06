@@ -1,5 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect, useRef } from 'react';
+
 import API, { getImageUrl } from '../../api';
 import './Home.css';
 
@@ -19,6 +23,61 @@ function Home() {
     const [debouncedQuery, setDebouncedQuery] = useState('');
     const [filters, setFilters] = useState(initialFilters);
     const [cityOptions, setCityOptions] = useState([]);
+    const [impactStats, setImpactStats] = useState({ mealsSaved: 0, totalListings: 0, activeDonors: 0 });
+    const [claimingId, setClaimingId] = useState(null);
+    const [claimMsg, setClaimMsg] = useState({ id: '', text: '', type: '' });
+
+    // Animated counter refs
+    const [displayedMeals, setDisplayedMeals] = useState(0);
+    const animFrame = useRef(null);
+
+    // Business Reviews Modal State
+    const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
+    const [businessReviews, setBusinessReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+
+    // Fetch impact stats
+    useEffect(() => {
+        const fetchImpact = async () => {
+            try {
+                const res = await API.get('/impact/stats');
+                setImpactStats(res.data);
+            } catch (err) {
+                // Non-critical
+            }
+        };
+        fetchImpact();
+    }, []);
+
+    // Animate the meals counter
+    useEffect(() => {
+        const target = impactStats.mealsSaved;
+        const duration = 1200;
+        const startTime = performance.now();
+        const startVal = displayedMeals;
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setDisplayedMeals(Math.round(startVal + (target - startVal) * eased));
+
+            if (progress < 1) {
+                animFrame.current = requestAnimationFrame(animate);
+            }
+        };
+
+        if (target !== startVal) {
+            animFrame.current = requestAnimationFrame(animate);
+        }
+
+        return () => {
+            if (animFrame.current) cancelAnimationFrame(animFrame.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [impactStats.mealsSaved]);
 
     // Debounce the free-text search so we don't fire a request per keystroke
     useEffect(() => {
@@ -113,6 +172,62 @@ function Home() {
         return 'badge-ok';
     };
 
+    // Claim handler
+    const handleClaim = async (listingId) => {
+        const user = localStorage.getItem('user');
+        if (!user) {
+            setClaimMsg({ id: listingId, text: 'Please log in to claim listings', type: 'error' });
+            return;
+        }
+        const parsed = JSON.parse(user);
+        if (parsed.role !== 'Consumer') {
+            setClaimMsg({ id: listingId, text: 'Only consumers can claim listings', type: 'error' });
+            return;
+        }
+
+        setClaimingId(listingId);
+        setClaimMsg({ id: '', text: '', type: '' });
+
+        try {
+            const res = await API.post(`/listings/${listingId}/claim`);
+            // Update listing in local state
+            setListings((prev) =>
+                prev.map((l) =>
+                    l._id === listingId ? { ...l, status: 'claimed' } : l
+                )
+            );
+            
+            setClaimMsg({ id: listingId, text: res.data.message, type: 'success' });
+            
+            // Pop up the OTP for the demo
+            if (res.data.otp) {
+                alert(`OTP Sent! Your pickup code is: ${res.data.otp}\nShow this to the business to complete the order.`);
+            }
+            
+        } catch (err) {
+            setClaimMsg({ id: listingId, text: err.response?.data?.message || 'Claim failed', type: 'error' });
+        } finally {
+            setClaimingId(null);
+        }
+    };
+
+    const handleViewReviews = async (business) => {
+        if (!business || !business._id) return;
+        setSelectedBusiness(business);
+        setReviewsModalOpen(true);
+        setReviewsLoading(true);
+        setBusinessReviews([]);
+
+        try {
+            const res = await API.get(`/reviews/business/${business._id}`);
+            setBusinessReviews(res.data);
+        } catch (err) {
+            // Handle silently or show toast
+        } finally {
+            setReviewsLoading(false);
+        }
+    };
+
     const filterBar = (
         <div className="feed-toolbar panel panel-lit">
             <div className="search-field">
@@ -202,6 +317,25 @@ function Home() {
     return (
         <div className="home-container page">
             <div className="page-inner">
+                {/* ── Impact Stats Banner ──────────────────── */}
+                <div className="impact-banner">
+                    <div className="impact-card impact-hero-card">
+                        <span className="impact-emoji" aria-hidden="true">🍽️</span>
+                        <span className="impact-number">{displayedMeals.toLocaleString()}</span>
+                        <span className="impact-label">Meals Saved</span>
+                    </div>
+                    <div className="impact-card">
+                        <span className="impact-emoji" aria-hidden="true">📦</span>
+                        <span className="impact-number">{impactStats.totalListings}</span>
+                        <span className="impact-label">Total Listings</span>
+                    </div>
+                    <div className="impact-card">
+                        <span className="impact-emoji" aria-hidden="true">🏪</span>
+                        <span className="impact-number">{impactStats.activeDonors}</span>
+                        <span className="impact-label">Active Donors</span>
+                    </div>
+                </div>
+
                 <header className="home-hero">
                     <span className="eyebrow">
                         <span className="eyebrow-dot" aria-hidden="true"></span>
@@ -232,7 +366,7 @@ function Home() {
                     <div className="listings-grid">
                         {listings.map((listing, index) => (
                             <article
-                                className="listing-card"
+                                className={`listing-card ${listing.status !== 'active' ? 'listing-claimed' : ''}`}
                                 key={listing._id}
                                 style={{ animationDelay: `${Math.min(index, 8) * 55}ms` }}
                             >
@@ -292,9 +426,16 @@ function Home() {
                                                 {(listing.business?.name || 'U').charAt(0).toUpperCase()}
                                             </span>
                                             {listing.business?.name || 'Unknown'}
+                                            <button 
+                                                className="btn-link-sm"
+                                                onClick={() => handleViewReviews(listing.business)}
+                                            >
+                                                (Reviews)
+                                            </button>
                                         </span>
                                     </div>
                                 </div>
+
 
                                 {user && user.role === 'Consumer' && listing.status === 'active' && listing.quantity > 0 && (
                                     <div className="card-actions" style={{ padding: '1.25rem', paddingTop: '0', marginTop: 'auto' }}>
@@ -307,11 +448,86 @@ function Home() {
                                         </button>
                                     </div>
                                 )}
+
+                                {/* Claim section */}
+                                <div className="card-claim-section">
+                                    {listing.status === 'active' ? (
+                                        <>
+                                            <button
+                                                className="btn btn-primary btn-sm btn-claim"
+                                                onClick={() => handleClaim(listing._id)}
+                                                disabled={claimingId === listing._id}
+                                                id={`claim-${listing._id}`}
+                                            >
+                                                {claimingId === listing._id ? (
+                                                    <>
+                                                        <span className="loading-spinner small" aria-hidden="true"></span>
+                                                        Claiming...
+                                                    </>
+                                                ) : (
+                                                    '🤝 Claim This'
+                                                )}
+                                            </button>
+                                            {claimMsg.id === listing._id && (
+                                                <span className={`claim-feedback ${claimMsg.type}`}>
+                                                    {claimMsg.text}
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <span className="badge badge-warn claim-status-badge">
+                                            ✅ Claimed
+                                        </span>
+                                    )}
+                                </div>
+
                             </article>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Business Reviews Modal */}
+            {reviewsModalOpen && (
+                <div className="business-reviews-overlay" onClick={() => setReviewsModalOpen(false)}>
+                    <div className="business-reviews-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Reviews for {selectedBusiness?.name}</h3>
+
+                        {reviewsLoading ? (
+                            <div className="state-block">
+                                <div className="loading-spinner"></div>
+                                <p>Loading reviews...</p>
+                            </div>
+                        ) : businessReviews.length === 0 ? (
+                            <div className="state-block">
+                                <p>No reviews yet for this business.</p>
+                            </div>
+                        ) : (
+                            <div className="reviews-list">
+                                {businessReviews.map((review) => (
+                                    <div className="review-item" key={review._id}>
+                                        <div className="review-header">
+                                            <span className="review-author">
+                                                {review.user?.name || 'Anonymous'}
+                                            </span>
+                                            <span className="review-stars">
+                                                {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                                            </span>
+                                        </div>
+                                        {review.reviewText && (
+                                            <p className="review-text">{review.reviewText}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button className="btn btn-secondary modal-close-btn" onClick={() => setReviewsModalOpen(false)}>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

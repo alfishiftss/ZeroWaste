@@ -1,9 +1,4 @@
-/* =========================================
-   Profile.css — Account settings
-   Panel surface, form fields, buttons, alerts
-   and spinner come from styles/theme.css
-   ========================================= */
-
+ 
 .profile-container {
     max-width: 700px;
     margin: 0 auto;

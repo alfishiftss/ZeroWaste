@@ -37,8 +37,17 @@ const listingSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['active', 'claimed', 'expired'],
+            enum: ['active', 'claimed', 'completed', 'expired'],
             default: 'active',
+        },
+        claimedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null,
+        },
+        claimOtp: {
+            type: String,
+            default: null,
         },
         imageUrl: {
             type: String,

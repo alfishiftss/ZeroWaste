@@ -90,6 +90,12 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
 }
 
+.listing-card:hover {
+    transform: translateY(-3px);
+    transition: transform 180ms ease;
+    box-shadow: 0 6px 18px rgba(12, 18, 26, 0.06);
+}
+
 .listing-card-head {
     display: flex;
     align-items: flex-start;
@@ -146,6 +152,38 @@
     white-space: nowrap;
 }
 
+.field-help {
+    margin-top: 0.45rem;
+    font-size: 0.82rem;
+    color: var(--text-3);
+}
+
+/* Badge styles for listing status */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: capitalize;
+}
+.badge-ok { background: #e6ffef; color: #0b6b3a; border: 1px solid rgba(11,107,58,0.08); }
+.badge-info { background: #eef6ff; color: #0b66a3; border: 1px solid rgba(11,102,163,0.08); }
+.badge-warn { background: #fff7e6; color: #a35b00; border: 1px solid rgba(163,91,0,0.06); }
+
+/* Button states: ghost/danger */
+.btn-danger-ghost {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(255, 68, 79, 0.12);
+}
+.btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border: none;
+}
+
 .listing-actions {
     display: flex;
     gap: 0.6rem;
@@ -190,4 +228,31 @@
     .section-heading {
         flex-direction: column;
     }
+}
+
+/* ── OTP Verification ────────────────────────────────────── */
+
+.otp-verify-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.otp-input {
+    width: 90px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.1em;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    outline: none;
+    transition: border-color var(--t);
+}
+
+.otp-input:focus {
+    border-color: rgba(74, 222, 128, 0.55);
 }
