@@ -9,6 +9,7 @@ import M4_ContentModeration from './components/member4/M4_ContentModeration';
 import Profile from './components/member1/Profile';
 import CreateListing from './components/member2/CreateListing';
 import Home from './components/member3/Home';
+import ConsumerDashboard from './components/member3/ConsumerDashboard';
 import Support from './components/member4/Support';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/moderation" element={<M4_ContentModeration />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/dashboard" element={<ConsumerDashboard />} />
                         <Route path="/business" element={<CreateListing />} />
                         <Route path="/business/listings" element={<CreateListing />} />
                         <Route path="/support" element={<Support />} />

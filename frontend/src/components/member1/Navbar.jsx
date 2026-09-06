@@ -99,6 +99,14 @@ function Navbar() {
                         </li>
                     )}
 
+                    {user && user.role === 'Consumer' && (
+                        <li>
+                            <Link to="/dashboard" className={linkClass('/dashboard')}>
+                                My Pickups
+                            </Link>
+                        </li>
+                    )}
+
                     {user ? (
                         <>
                             <li className="nav-notif-item">
