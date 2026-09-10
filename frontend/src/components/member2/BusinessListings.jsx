@@ -87,6 +87,20 @@ function BusinessListings() {
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            setError('Please choose a JPG, PNG, GIF, or WebP image.');
+            e.target.value = '';
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setError('The selected image must be 5 MB or smaller.');
+            e.target.value = '';
+            return;
+        }
+
+        setError('');
         setImageFile(file);
         setImagePreview(URL.createObjectURL(file));
     };
@@ -265,10 +279,6 @@ function BusinessListings() {
             <div className="page-inner business-page-inner">
                 <div className="business-hero panel panel-lit panel-glass">
                     <div className="business-hero-copy">
-                        <span className="eyebrow">
-                            <span className="eyebrow-dot" aria-hidden="true"></span>
-                            Feature 10
-                        </span>
                         <h2>Listing Management</h2>
                         <p>
                             Create food listings with a photo for nearby users, and edit or remove them
@@ -308,8 +318,8 @@ function BusinessListings() {
                             )}
                         </div>
 
-                        {message && <div className="alert alert-success business-alert">{message}</div>}
-                        {error && <div className="alert alert-error business-alert">{error}</div>}
+                        {message && <div className="alert alert-success business-alert" role="status">{message}</div>}
+                        {error && <div className="alert alert-error business-alert" role="alert">{error}</div>}
 
                         <form className="business-form" onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -409,6 +419,7 @@ function BusinessListings() {
                                     type="datetime-local"
                                     value={formData.expiryTime}
                                     onChange={handleChange}
+                                    min={toDateTimeLocal(new Date())}
                                     required
                                 />
                                 <div className="field-help">Local date and time when the listing should be removed.</div>
@@ -416,14 +427,21 @@ function BusinessListings() {
 
                             <div className="form-group">
                                 <label htmlFor="listing-image">Photo</label>
+                                <label className="photo-upload" htmlFor="listing-image">
+                                    <span className="photo-upload-icon" aria-hidden="true">+</span>
+                                    <span className="photo-upload-copy">
+                                        <strong>{imageFile ? imageFile.name : 'Choose a food photo'}</strong>
+                                        <small>JPG, PNG, GIF or WebP · up to 5 MB</small>
+                                    </span>
+                                </label>
                                 <input
                                     id="listing-image"
                                     name="image"
                                     type="file"
+                                    className="visually-hidden"
                                     accept="image/png, image/jpeg, image/gif, image/webp"
                                     onChange={handleImageChange}
                                 />
-                                <div className="field-help">Optional — helps buyers identify items. Max 5MB recommended.</div>
                                 {(imagePreview || (editingId && listings.find((l) => l._id === editingId)?.imageUrl)) && (
                                     <img
                                         className="image-preview"
@@ -512,13 +530,15 @@ function BusinessListings() {
                                         </div>
 
                                         <div className="listing-actions">
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary btn-sm"
-                                                onClick={() => startEdit(listing)}
-                                            >
-                                                Edit
-                                            </button>
+                                            {listing.status === 'active' && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary btn-sm"
+                                                    onClick={() => startEdit(listing)}
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
 
                                             {listing.status === 'claimed' && (
                                                 <div className="otp-verify-group">
@@ -545,7 +565,7 @@ function BusinessListings() {
                                                 </div>
                                             )}
 
-                                            {confirmDeleteId === listing._id ? (
+                                            {listing.status === 'active' && (confirmDeleteId === listing._id ? (
                                                 <>
                                                     <button
                                                         type="button"
@@ -573,7 +593,7 @@ function BusinessListings() {
                                                 >
                                                     Delete
                                                 </button>
-                                            )}
+                                            ))}
                                         </div>
                                     </article>
                                 ))}

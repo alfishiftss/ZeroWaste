@@ -1,32 +1,14 @@
-import React, { useState, useEffect } from 'react';
-
-
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import API from '../../api';
 import './ConsumerDashboard.css';
 
 function ConsumerDashboard() {
-
-    const [claims, setClaims] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        const fetchClaims = async () => {
-            try {
-                const res = await API.get('/claims/my-claims');
-                setClaims(res.data);
-            } catch (err) {
-                console.error(err);
-                setError('Failed to load your claims.');
-
     const navigate = useNavigate();
     const [pickups, setPickups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
-    // Review Modal State
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [selectedListing, setSelectedListing] = useState(null);
     const [rating, setRating] = useState(0);
@@ -34,14 +16,26 @@ function ConsumerDashboard() {
     const [reviewText, setReviewText] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [reviewError, setReviewError] = useState('');
-    
-    // Track newly reviewed listings in state so we can disable the button immediately
     const [reviewedListings, setReviewedListings] = useState(new Set());
 
     useEffect(() => {
-        const user = localStorage.getItem('user');
-        if (!user) {
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
             navigate('/login');
+            return;
+        }
+
+        let parsedUser;
+        try {
+            parsedUser = JSON.parse(storedUser);
+        } catch {
+            localStorage.removeItem('user');
+            navigate('/login');
+            return;
+        }
+
+        if (parsedUser.role !== 'Consumer') {
+            navigate('/');
             return;
         }
 
@@ -50,28 +44,11 @@ function ConsumerDashboard() {
                 const res = await API.get('/listings/pickups');
                 setPickups(res.data);
             } catch (err) {
-                setError('Failed to load your pickups');
-
+                setError(err.response?.data?.message || 'Failed to load your pickups');
             } finally {
                 setLoading(false);
             }
         };
-
-
-        fetchClaims();
-    }, []);
-
-    const formatExpiry = (dateStr) => {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diffMs = date - now;
-        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (diffMs < 0) return 'Expired';
-        if (diffHrs > 24) return `${Math.floor(diffHrs / 24)}d ${diffHrs % 24}h left`;
-        if (diffHrs > 0) return `${diffHrs}h ${diffMins}m left`;
-        return `${diffMins}m left`;
 
         fetchPickups();
     }, [navigate]);
@@ -86,12 +63,13 @@ function ConsumerDashboard() {
     };
 
     const closeReviewModal = () => {
+        if (submitting) return;
         setReviewModalOpen(false);
         setSelectedListing(null);
     };
 
     const submitReview = async () => {
-        if (rating === 0) {
+        if (!selectedListing || rating === 0) {
             setReviewError('Please select a star rating.');
             return;
         }
@@ -103,31 +81,24 @@ function ConsumerDashboard() {
             await API.post('/reviews', {
                 listingId: selectedListing._id,
                 rating,
-                reviewText
+                reviewText,
             });
-
-            // Add to reviewed set
-            setReviewedListings((prev) => new Set(prev).add(selectedListing._id));
-            closeReviewModal();
+            setReviewedListings((current) => new Set(current).add(selectedListing._id));
+            setReviewModalOpen(false);
+            setSelectedListing(null);
         } catch (err) {
             setReviewError(err.response?.data?.message || 'Failed to submit review');
         } finally {
             setSubmitting(false);
         }
-
     };
 
     if (loading) {
         return (
             <div className="dashboard-container page">
-
-                <div className="page-inner">
-                    <h2>Loading dashboard...</h2>
-
                 <div className="state-block">
-                    <div className="loading-spinner"></div>
+                    <div className="loading-spinner" aria-hidden="true"></div>
                     <p>Loading your pickups...</p>
-
                 </div>
             </div>
         );
@@ -136,147 +107,106 @@ function ConsumerDashboard() {
     return (
         <div className="dashboard-container page">
             <div className="page-inner">
-
-                <header className="dashboard-header">
-                    <h1>My Claims</h1>
-                    <p>Show these 4-digit codes to the business when picking up your food.</p>
-                </header>
-
-                {error && <div className="alert alert-error">⚠️ {error}</div>}
-
-                {claims.length === 0 && !error ? (
-                    <div className="dashboard-empty">
-                        <div className="empty-icon" aria-hidden="true">🧾</div>
-                        <h3>No Active Claims</h3>
-                        <p>When you claim a food listing, it will appear here.</p>
-                    </div>
-                ) : (
-                    <div className="claims-grid">
-                        {claims.map((claim) => (
-                            <div className="claim-card" key={claim._id}>
-                                <div className="claim-card-header">
-                                    <span className={`status-badge status-${claim.status.toLowerCase()}`}>
-                                        {claim.status}
-                                    </span>
-                                    <div className="otp-display">
-                                        <span className="otp-label">PICKUP CODE</span>
-                                        <span className="otp-code">{claim.otp}</span>
-                                    </div>
-                                </div>
-                                <div className="claim-card-body">
-                                    {claim.listing ? (
-                                        <>
-                                            <h3 className="claim-title">{claim.listing.title}</h3>
-                                            <p className="claim-desc">{claim.listing.description}</p>
-                                            <p className="claim-meta">
-                                                📍 {[claim.listing.neighborhood, claim.listing.city].filter(Boolean).join(', ')}
-                                            </p>
-                                            <p className="claim-meta">
-                                                ⏳ {formatExpiry(claim.listing.expiryTime)}
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <p className="claim-desc text-muted">Listing information unavailable (possibly deleted).</p>
-
                 <div className="dashboard-hero panel panel-lit">
-                    <h2>My Pickups</h2>
-                    <p>Track your claims and leave reviews for businesses.</p>
+                    <span className="eyebrow">Your food rescue history</span>
+                    <h1>My Pickups</h1>
+                    <p>Track claimed food and review completed pickups.</p>
                 </div>
 
-                {error && <div className="alert alert-error">{error}</div>}
+                {error && <div className="alert alert-error" role="alert">{error}</div>}
 
                 {pickups.length === 0 ? (
                     <div className="state-block panel">
                         <div className="empty-icon" aria-hidden="true">🛒</div>
-                        <h4>No pickups yet</h4>
-                        <p>Browse the home feed to claim surplus food!</p>
-                        <button className="btn btn-primary" onClick={() => navigate('/')}>
-                            Browse Food
+                        <h2>No pickups yet</h2>
+                        <p>Browse nearby surplus food and claim your first listing.</p>
+                        <button type="button" className="btn btn-primary" onClick={() => navigate('/')}>
+                            Browse food
                         </button>
                     </div>
                 ) : (
                     <div className="pickups-grid">
-                        {pickups.map(pickup => (
-                            <div className="pickup-card" key={pickup._id}>
+                        {pickups.map((pickup) => (
+                            <article className="pickup-card" key={pickup._id}>
                                 <div className="pickup-header">
-                                    <h3 className="pickup-title">{pickup.title}</h3>
-                                    <span className={`pickup-status ${pickup.status}`}>
-                                        {pickup.status}
-                                    </span>
+                                    <h2 className="pickup-title">{pickup.title}</h2>
+                                    <span className={`pickup-status ${pickup.status}`}>{pickup.status}</span>
                                 </div>
                                 <div className="pickup-details">
                                     <p><strong>Business:</strong> {pickup.business?.name || 'Unknown'}</p>
-                                    <p><strong>Food Type:</strong> {pickup.foodType}</p>
+                                    <p><strong>Food type:</strong> {pickup.foodType}</p>
                                     <p><strong>Quantity:</strong> {pickup.quantity}</p>
                                 </div>
-                                
                                 <div className="pickup-actions">
                                     {pickup.status === 'completed' && !reviewedListings.has(pickup._id) ? (
-                                        <button 
+                                        <button
+                                            type="button"
                                             className="btn btn-accent btn-sm"
                                             onClick={() => openReviewModal(pickup)}
                                         >
-                                            ⭐ Leave a Review
+                                            Leave a review
                                         </button>
-                                    ) : pickup.status === 'completed' && reviewedListings.has(pickup._id) ? (
+                                    ) : pickup.status === 'completed' ? (
                                         <span className="badge badge-ok">Reviewed</span>
                                     ) : (
-                                        <span className="badge badge-neutral">Pending Verification</span>
-
+                                        <span className="badge badge-neutral">Pending verification</span>
                                     )}
                                 </div>
-                            </div>
+                            </article>
                         ))}
                     </div>
                 )}
             </div>
 
-
-            {/* Review Modal */}
             {reviewModalOpen && (
                 <div className="review-modal-overlay" onClick={closeReviewModal}>
-                    <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>Review {selectedListing?.business?.name}</h3>
-                        <p>How was your experience with "{selectedListing?.title}"?</p>
-
-                        {reviewError && <div className="alert alert-error" style={{marginBottom: '1rem'}}>{reviewError}</div>}
-
-                        <div className="star-rating">
+                    <div
+                        className="review-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="review-dialog-title"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h2 id="review-dialog-title">Review {selectedListing?.business?.name}</h2>
+                        <p>How was your experience with “{selectedListing?.title}”?</p>
+                        {reviewError && <div className="alert alert-error" role="alert">{reviewError}</div>}
+                        <div className="star-rating" aria-label="Rating">
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <button
                                     key={star}
+                                    type="button"
                                     className={`star-btn ${(hoverRating || rating) >= star ? 'active' : ''}`}
                                     onMouseEnter={() => setHoverRating(star)}
                                     onMouseLeave={() => setHoverRating(0)}
+                                    onFocus={() => setHoverRating(star)}
+                                    onBlur={() => setHoverRating(0)}
                                     onClick={() => setRating(star)}
-                                    type="button"
-                                    aria-label={`Rate ${star} stars`}
+                                    aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
                                 >
                                     ★
                                 </button>
                             ))}
                         </div>
-
+                        <label className="review-label" htmlFor="review-text">Review details (optional)</label>
                         <textarea
+                            id="review-text"
                             className="review-textarea"
-                            placeholder="Share details about your experience (optional)..."
+                            placeholder="Share details about your experience..."
                             value={reviewText}
-                            onChange={(e) => setReviewText(e.target.value)}
+                            onChange={(event) => setReviewText(event.target.value)}
                             maxLength={500}
                         />
-
                         <div className="modal-actions">
-                            <button className="btn btn-secondary" onClick={closeReviewModal} disabled={submitting}>
+                            <button type="button" className="btn btn-secondary" onClick={closeReviewModal} disabled={submitting}>
                                 Cancel
                             </button>
-                            <button className="btn btn-primary" onClick={submitReview} disabled={submitting || rating === 0}>
-                                {submitting ? 'Submitting...' : 'Submit Review'}
+                            <button type="button" className="btn btn-primary" onClick={submitReview} disabled={submitting || rating === 0}>
+                                {submitting ? 'Submitting...' : 'Submit review'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
