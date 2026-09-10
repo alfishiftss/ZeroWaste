@@ -5,7 +5,7 @@ import Login from './components/member1/Login';
 import Register from './components/member1/Register';
 import ForgotPassword from './components/member1/ForgotPassword';
 import AdminDashboard from './components/member4/AdminDashboard';
-import M4_ContentModeration from './components/member4/M4_ContentModeration';
+import ContentModeration from './components/member4/M4_ContentModeration';
 import Profile from './components/member1/Profile';
 import CreateListing from './components/member2/CreateListing';
 import Home from './components/member3/Home';
@@ -15,7 +15,7 @@ import Support from './components/member4/Support';
 
 function App() {
     return (
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="app-shell">
                 <div className="app-bg" aria-hidden="true"></div>
 
@@ -28,14 +28,11 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/admin" element={<AdminDashboard />} />
-                        <Route path="/admin/moderation" element={<M4_ContentModeration />} />
+                        <Route path="/admin/moderation" element={<ContentModeration />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/dashboard" element={<ConsumerDashboard />} />
                         <Route path="/business" element={<CreateListing />} />
                         <Route path="/business/listings" element={<CreateListing />} />
-
-                        <Route path="/dashboard" element={<ConsumerDashboard />} />
-
                         <Route path="/support" element={<Support />} />
 
                     </Routes>

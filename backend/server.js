@@ -70,7 +70,7 @@ connectDatabase();
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
-const claimRoutes = require('./routes/claimRoutes');
+app.use('/api/claims', claimRoutes);
 
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/impact', impactRoutes);

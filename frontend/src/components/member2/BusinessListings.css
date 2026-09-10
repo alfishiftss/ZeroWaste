@@ -1,4 +1,4 @@
-/* Business dashboard for Feature 10 */
+/* Business listing dashboard */
 
 .business-container {
     animation: fadeSlideUp 0.5s var(--t-slow) both;
@@ -19,7 +19,7 @@
 }
 
 .business-hero-copy h2 {
-    margin-top: 0.9rem;
+    margin-top: 0;
     margin-bottom: 0.55rem;
     font-size: 2rem;
     font-weight: 850;
@@ -45,7 +45,7 @@
     padding: 1.5rem;
 }
 
-.section-heading {
+.business-container .section-heading {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -53,7 +53,7 @@
     margin-bottom: 1.25rem;
 }
 
-.section-kicker {
+.business-container .section-kicker {
     display: inline-block;
     margin-bottom: 0.35rem;
     font-size: 0.7rem;
@@ -63,7 +63,7 @@
     color: var(--brand-300);
 }
 
-.section-heading h3 {
+.business-container .section-heading h3 {
     font-size: 1.15rem;
     font-weight: 750;
 }
@@ -83,14 +83,14 @@
     gap: 0.95rem;
 }
 
-.listing-card {
+.business-container .listing-card {
     padding: 1rem 1.05rem;
     border: 1px solid var(--stroke);
     border-radius: var(--r-md);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
 }
 
-.listing-card:hover {
+.business-container .listing-card:hover {
     transform: translateY(-3px);
     transition: transform 180ms ease;
     box-shadow: 0 6px 18px rgba(12, 18, 26, 0.06);
@@ -118,7 +118,7 @@
     border: 1px solid var(--stroke);
 }
 
-.listing-card h4 {
+.business-container .listing-card h4 {
     font-size: 1.02rem;
     font-weight: 750;
     margin-bottom: 0.25rem;
@@ -129,7 +129,7 @@
     font-size: 0.8rem;
 }
 
-.listing-description {
+.business-container .listing-description {
     color: var(--text-2);
     margin-bottom: 0.9rem;
 }
@@ -159,7 +159,7 @@
 }
 
 /* Badge styles for listing status */
-.badge {
+.business-container .badge {
     display: inline-flex;
     align-items: center;
     padding: 0.25rem 0.6rem;
@@ -168,17 +168,17 @@
     font-size: 0.78rem;
     text-transform: capitalize;
 }
-.badge-ok { background: #e6ffef; color: #0b6b3a; border: 1px solid rgba(11,107,58,0.08); }
-.badge-info { background: #eef6ff; color: #0b66a3; border: 1px solid rgba(11,102,163,0.08); }
-.badge-warn { background: #fff7e6; color: #a35b00; border: 1px solid rgba(163,91,0,0.06); }
+.business-container .badge-ok { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(74, 222, 128, 0.24); }
+.business-container .badge-info { background: var(--info-soft); color: var(--info); border: 1px solid rgba(96, 165, 250, 0.24); }
+.business-container .badge-warn { background: var(--warn-soft); color: var(--warn); border: 1px solid rgba(251, 191, 36, 0.24); }
 
 /* Button states: ghost/danger */
-.btn-danger-ghost {
+.business-container .btn-danger-ghost {
     background: transparent;
     color: var(--danger);
     border: 1px solid rgba(255, 68, 79, 0.12);
 }
-.btn-danger {
+.business-container .btn-danger {
     background: var(--danger);
     color: #fff;
     border: none;
@@ -194,11 +194,86 @@
 
 .image-preview {
     margin-top: 0.75rem;
-    max-width: 100%;
-    max-height: 180px;
+    width: 100%;
+    height: 190px;
     border-radius: var(--r-sm);
     border: 1px solid var(--stroke);
     object-fit: cover;
+}
+
+.photo-upload {
+    display: flex !important;
+    align-items: center;
+    gap: 0.9rem;
+    min-height: 76px;
+    margin: 0 !important;
+    padding: 0.9rem 1rem;
+    border: 1px dashed var(--stroke-strong);
+    border-radius: var(--r-sm);
+    background: var(--surface-1);
+    color: var(--text-2) !important;
+    cursor: pointer;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    transition: border-color var(--t), background var(--t), transform var(--t-fast);
+}
+
+.photo-upload:hover {
+    border-color: var(--stroke-brand);
+    background: var(--brand-softer);
+}
+
+.photo-upload:active {
+    transform: scale(0.995);
+}
+
+.photo-upload-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 13px;
+    background: var(--brand-soft);
+    color: var(--brand-300);
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+.photo-upload-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.photo-upload-copy strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 0.9rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.photo-upload-copy small {
+    margin-top: 0.15rem;
+    color: var(--text-3);
+    font-size: 0.76rem;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.photo-upload:has(+ .visually-hidden:focus-visible) {
+    box-shadow: var(--ring);
 }
 
 .business-empty-state {
@@ -221,12 +296,82 @@
 }
 
 @media (max-width: 620px) {
-    .business-card {
-        padding: 1.25rem;
+    .business-page-inner {
+        gap: 1rem;
     }
 
-    .section-heading {
+    .business-hero {
+        padding: 1.2rem;
+    }
+
+    .business-hero-copy h2 {
+        font-size: 1.65rem;
+    }
+
+    .business-stats {
+        gap: 0.55rem;
+    }
+
+    .business-stats .stat-card {
+        min-width: 0;
+        padding: 0.9rem 0.7rem;
+    }
+
+    .business-stats .stat-value {
+        font-size: 1.45rem;
+    }
+
+    .business-stats .stat-label {
+        font-size: 0.59rem;
+    }
+
+    .business-card {
+        padding: 1.1rem;
+    }
+
+    .business-container .section-heading {
         flex-direction: column;
+    }
+
+    .listing-card-head {
+        flex-wrap: wrap;
+    }
+
+    .listing-actions {
+        flex-wrap: wrap;
+    }
+
+    .otp-verify-group {
+        width: 100%;
+        order: -1;
+    }
+
+    .otp-input {
+        flex: 1;
+        width: auto;
+        min-height: 42px;
+    }
+
+    .listing-actions > .btn,
+    .listing-actions > button {
+        flex: 1 1 120px;
+        min-height: 42px;
+    }
+
+    .listing-pill {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 380px) {
+    .business-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .business-stats .stat-card {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
     }
 }
 
