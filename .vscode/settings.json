@@ -1,0 +1,4 @@
+{
+    "clangd.checkUpdates": true,
+    "go.toolsManagement.autoUpdate": true
+}

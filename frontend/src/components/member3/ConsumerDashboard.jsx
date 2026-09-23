@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from 'react';
-
-
 import { useNavigate } from 'react-router-dom';
-
 import API from '../../api';
 import './ConsumerDashboard.css';
 
 function ConsumerDashboard() {
+    const navigate = useNavigate();
 
     const [claims, setClaims] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        const fetchClaims = async () => {
-            try {
-                const res = await API.get('/claims/my-claims');
-                setClaims(res.data);
-            } catch (err) {
-                console.error(err);
-                setError('Failed to load your claims.');
-
-    const navigate = useNavigate();
     const [pickups, setPickups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -45,21 +30,25 @@ function ConsumerDashboard() {
             return;
         }
 
-        const fetchPickups = async () => {
+        const fetchData = async () => {
             try {
-                const res = await API.get('/listings/pickups');
-                setPickups(res.data);
-            } catch (err) {
-                setError('Failed to load your pickups');
+                // Fetch claims
+                const claimsRes = await API.get('/claims/my-claims');
+                setClaims(claimsRes.data);
 
+                // Fetch pickups
+                const pickupsRes = await API.get('/listings/pickups');
+                setPickups(pickupsRes.data);
+            } catch (err) {
+                console.error(err);
+                setError('Failed to load dashboard data.');
             } finally {
                 setLoading(false);
             }
         };
 
-
-        fetchClaims();
-    }, []);
+        fetchData();
+    }, [navigate]);
 
     const formatExpiry = (dateStr) => {
         const date = new Date(dateStr);
@@ -72,9 +61,7 @@ function ConsumerDashboard() {
         if (diffHrs > 24) return `${Math.floor(diffHrs / 24)}d ${diffHrs % 24}h left`;
         if (diffHrs > 0) return `${diffHrs}h ${diffMins}m left`;
         return `${diffMins}m left`;
-
-        fetchPickups();
-    }, [navigate]);
+    };
 
     const openReviewModal = (listing) => {
         setSelectedListing(listing);
@@ -114,20 +101,17 @@ function ConsumerDashboard() {
         } finally {
             setSubmitting(false);
         }
-
     };
 
     if (loading) {
         return (
             <div className="dashboard-container page">
-
                 <div className="page-inner">
                     <h2>Loading dashboard...</h2>
-
-                <div className="state-block">
-                    <div className="loading-spinner"></div>
-                    <p>Loading your pickups...</p>
-
+                    <div className="state-block">
+                        <div className="loading-spinner"></div>
+                        <p>Loading your data...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -177,13 +161,17 @@ function ConsumerDashboard() {
                                         </>
                                     ) : (
                                         <p className="claim-desc text-muted">Listing information unavailable (possibly deleted).</p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
-                <div className="dashboard-hero panel panel-lit">
+                <div className="dashboard-hero panel panel-lit" style={{ marginTop: '2rem' }}>
                     <h2>My Pickups</h2>
                     <p>Track your claims and leave reviews for businesses.</p>
                 </div>
-
-                {error && <div className="alert alert-error">{error}</div>}
 
                 {pickups.length === 0 ? (
                     <div className="state-block panel">
@@ -222,7 +210,6 @@ function ConsumerDashboard() {
                                         <span className="badge badge-ok">Reviewed</span>
                                     ) : (
                                         <span className="badge badge-neutral">Pending Verification</span>
-
                                     )}
                                 </div>
                             </div>
@@ -230,7 +217,6 @@ function ConsumerDashboard() {
                     </div>
                 )}
             </div>
-
 
             {/* Review Modal */}
             {reviewModalOpen && (
@@ -276,7 +262,6 @@ function ConsumerDashboard() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
