@@ -342,7 +342,7 @@ function Home() {
 
                 {filterBar}
 
-                {error && <div className="alert alert-error home-error">⚠️ {error}</div>}
+                {error && <div className="alert alert-error home-error" role="alert">⚠️ {error}</div>}
 
                 {listings.length === 0 ? (
                     <div className="home-empty">
@@ -414,34 +414,25 @@ function Home() {
                                                 {(listing.business?.name || 'U').charAt(0).toUpperCase()}
                                             </span>
                                             {listing.business?.name || 'Unknown'}
-                                            <button 
+                                            <button
+                                                type="button"
                                                 className="btn-link-sm"
                                                 onClick={() => handleViewReviews(listing.business)}
                                             >
-                                                (Reviews)
+                                                View reviews
                                             </button>
                                         </span>
                                     </div>
                                 </div>
-
-
-                                {user && user.role === 'Consumer' && listing.status === 'active' && listing.quantity > 0 && (
-                                    <div className="card-actions" style={{ padding: '1.25rem', paddingTop: '0', marginTop: 'auto' }}>
-                                        <button 
-                                            className="btn btn-primary" 
-                                            style={{ width: '100%' }}
-                                            onClick={() => handleClaim(listing._id)}
-                                        >
-                                            Claim
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Claim section */}
                                 <div className="card-claim-section">
-                                    {listing.status === 'active' ? (
+                                    {listing.status !== 'active' ? (
+                                        <span className="badge badge-warn claim-status-badge">
+                                            Claimed
+                                        </span>
+                                    ) : user?.role === 'Consumer' ? (
                                         <>
                                             <button
+                                                type="button"
                                                 className="btn btn-primary btn-sm btn-claim"
                                                 onClick={() => handleClaim(listing._id)}
                                                 disabled={claimingId === listing._id}
@@ -457,15 +448,21 @@ function Home() {
                                                 )}
                                             </button>
                                             {claimMsg.id === listing._id && (
-                                                <span className={`claim-feedback ${claimMsg.type}`}>
+                                                <span className={`claim-feedback ${claimMsg.type}`} role="status">
                                                     {claimMsg.text}
                                                 </span>
                                             )}
                                         </>
+                                    ) : !user ? (
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary btn-sm btn-claim"
+                                            onClick={() => navigate('/login')}
+                                        >
+                                            Sign in to claim
+                                        </button>
                                     ) : (
-                                        <span className="badge badge-warn claim-status-badge">
-                                            ✅ Claimed
-                                        </span>
+                                        <span className="availability-note">Available for consumers</span>
                                     )}
                                 </div>
 
@@ -478,8 +475,14 @@ function Home() {
             {/* Business Reviews Modal */}
             {reviewsModalOpen && (
                 <div className="business-reviews-overlay" onClick={() => setReviewsModalOpen(false)}>
-                    <div className="business-reviews-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>Reviews for {selectedBusiness?.name}</h3>
+                    <div
+                        className="business-reviews-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="reviews-modal-title"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 id="reviews-modal-title">Reviews for {selectedBusiness?.name}</h3>
 
                         {reviewsLoading ? (
                             <div className="state-block">

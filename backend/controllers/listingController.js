@@ -157,7 +157,11 @@ const updateListing = async (req, res) => {
             return res.status(403).json({ message: 'You can only edit your own listings' });
         }
 
-        const { title, description, quantity, foodType, expiryTime, city, neighborhood, status } = req.body;
+        if (listing.status !== 'active') {
+            return res.status(400).json({ message: 'Only active listings can be edited' });
+        }
+
+        const { title, description, quantity, foodType, expiryTime, city, neighborhood } = req.body;
 
         if (title !== undefined) listing.title = title;
         if (description !== undefined) listing.description = description;
@@ -179,14 +183,10 @@ const updateListing = async (req, res) => {
             if (Number.isNaN(parsedExpiryTime.getTime())) {
                 return res.status(400).json({ message: 'Please provide a valid expiry time' });
             }
-            listing.expiryTime = parsedExpiryTime;
-        }
-
-        if (status !== undefined) {
-            if (!['active', 'claimed', 'completed', 'expired'].includes(status)) {
-                return res.status(400).json({ message: 'Invalid status value' });
+            if (parsedExpiryTime <= new Date()) {
+                return res.status(400).json({ message: 'Expiry time must be in the future' });
             }
-            listing.status = status;
+            listing.expiryTime = parsedExpiryTime;
         }
 
         if (req.file) {
@@ -227,6 +227,10 @@ const deleteListing = async (req, res) => {
 
         if (listing.business.toString() !== req.user.id) {
             return res.status(403).json({ message: 'You can only delete your own listings' });
+        }
+
+        if (listing.status !== 'active') {
+            return res.status(400).json({ message: 'Only active listings can be deleted' });
         }
 
         await deleteImage(listing.imagePublicId);
